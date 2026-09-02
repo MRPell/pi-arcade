@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Arcade GPIO Daemon
+Documentation=https://github.com/MRPell/pi-arcade
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /home/pi/pi-arcade/src/gpio_daemon.py
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

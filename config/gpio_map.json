@@ -1,0 +1,30 @@
+{
+  "_comment": "All GPIO numbers use BCM (Broadcom) numbering. See docs/hardware-setup.md for the wiring diagram.",
+  "joystick": {
+    "up":    17,
+    "down":  18,
+    "left":  27,
+    "right": 22
+  },
+  "buttons": {
+    "fire": {
+      "gpio": 23,
+      "evdev_key": "BTN_SOUTH",
+      "_comment": "Primary fire / jump / action. Maps to RetroPad A button."
+    },
+    "action2": {
+      "gpio": 24,
+      "evdev_key": "BTN_EAST",
+      "_comment": "Secondary action (barrel roll in 1942, etc). Maps to RetroPad B button."
+    },
+    "coin_start": {
+      "gpio": 25,
+      "action": "coin_start_sequence",
+      "coin_hold_ms": 100,
+      "start_delay_ms": 200,
+      "start_hold_ms": 100,
+      "_comment": "Sends coin insert (BTN_SELECT) then Player 1 Start (BTN_START) automatically."
+    }
+  },
+  "debounce_ms": 20
+}
