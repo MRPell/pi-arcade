@@ -50,10 +50,10 @@
   },
   "chords": {
     "player2_start": {
-      "buttons": ["coin", "action6"],
+      "buttons": ["action5", "action6"],
       "evdev_key": "BTN_START",
       "device": 2,
-      "_comment": "Hold these buttons together for 2-Player Start (alternating two-player games). Sent on a second virtual gamepad so MAME reads it as P2 Start. Like the Coin+Start exit combo, no dedicated button needed."
+      "_comment": "Hold BTN 5 + BTN 6 together for 2-Player Start (alternating two-player games). Sent on a second virtual gamepad so MAME reads it as P2 Start. Neither button is a RetroArch hotkey modifier, so it does not collide with save-state (Coin + BTN 6 would)."
     }
   },
   "debounce_ms": 15

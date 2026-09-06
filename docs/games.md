@@ -16,7 +16,7 @@ All run via MAME (lr-mame2003-plus) in RetroPie. Every game here needs at most B
 | Coin | Insert credit |
 | Start | Player 1 Start |
 | Coin + Start | Exit the current game |
-| Coin + BTN 6 | 2-Player Start (insert 2 credits first; alternating play on the one panel) |
+| BTN 5 + BTN 6 | 2-Player Start (insert 2 credits first; alternating play on the one panel) |
 
 ---
 

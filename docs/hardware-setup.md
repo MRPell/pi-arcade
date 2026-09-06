@@ -170,7 +170,7 @@ Start:
 **Combos** (no dedicated button — like a real cabinet's service switches):
 
 - **Exit a game:** Coin + Start together (RetroArch hotkey).
-- **2-Player Start:** hold **Coin + BTN 6** together. The GPIO daemon emits this on a second virtual gamepad, so MAME reads it as 2-Player Start. Insert two credits first (Coin twice). Only useful for *alternating* two-player games where players take turns on the one panel — simultaneous games need a second set of controls this cabinet doesn't have. The combo is set in `config/gpio_map.json` under `chords` if you want to change which buttons trigger it.
+- **2-Player Start:** hold **BTN 5 + BTN 6** together. The GPIO daemon emits this on a second virtual gamepad, so MAME reads it as 2-Player Start. Insert two credits first (Coin twice). Only useful for *alternating* two-player games where players take turns on the one panel — simultaneous games need a second set of controls this cabinet doesn't have. The combo is set in `config/gpio_map.json` under `chords` if you want to change which buttons trigger it. (BTN 5 + BTN 6 is chosen because neither is a RetroArch hotkey modifier — Coin + BTN 6 would also trigger save-state.)
 
 ---
 
