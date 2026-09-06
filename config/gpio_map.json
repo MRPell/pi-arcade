@@ -48,5 +48,5 @@
       "_comment": "Player 1 Start. Maps to RetroPad Start."
     }
   },
-  "debounce_ms": 50
+  "debounce_ms": 15
 }

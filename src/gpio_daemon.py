@@ -8,19 +8,27 @@ gamepad via Linux uinput. RetroArch/MAME see a standard gamepad device.
 Config: ../config/gpio_map.json
 Requires: RPi.GPIO, python3-evdev
 Run as root (uinput access): sudo python3 gpio_daemon.py
+
+Inputs are read with a tight polling loop rather than GPIO.add_event_detect:
+RPi.GPIO edge callbacks silently drop edges under CPU load, which strands the
+virtual axis or a button in the held state. Polling every POLL_INTERVAL and
+debouncing on elapsed stable time cannot miss a transition.
 """
 
 import json
 import os
 import signal
 import sys
-import threading
 import time
 
 import RPi.GPIO as GPIO
 from evdev import UInput, ecodes as e, AbsInfo
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', 'config', 'gpio_map.json')
+
+# Seconds between full sweeps of every pin. 1 ms is ~1000 Hz; each read is a
+# cheap C call, so the loop costs well under 1% CPU on a Pi 3.
+POLL_INTERVAL = 0.001
 
 # Virtual gamepad capabilities exposed to the OS.
 # Joystick axes: ABS_X (left/right) and ABS_Y (up/down), range -1..1.
@@ -53,9 +61,18 @@ class ArcadeInput:
     def __init__(self, config, verbose=False):
         self.config = config
         self.verbose = verbose
-        self.debounce_ms = config.get('debounce_ms', 20)
+        self.debounce_s = config.get('debounce_ms', 15) / 1000.0
         self._joy_state = {'up': False, 'down': False, 'left': False, 'right': False}
-        self._lock = threading.Lock()
+        self._axis = {'x': 0, 'y': 0}
+
+        # Per-pin debounce bookkeeping.
+        #   stable   – last debounced logical state (True = pressed)
+        #   pending  – most recent raw reading not yet accepted
+        #   since    – monotonic time the raw reading last flipped
+        self._pins = []          # list of dicts: pin, kind, name, evdev_key
+        self._stable = {}
+        self._pending = {}
+        self._since = {}
 
         self.ui = UInput(GAMEPAD_CAPS, name='Pi Arcade Controller', version=0x1)
         self._log(f"Virtual gamepad created: {self.ui.device.path}")
@@ -68,62 +85,92 @@ class ArcadeInput:
 
     def _setup_gpio(self):
         GPIO.setmode(GPIO.BCM)
+        now = time.monotonic()
 
-        joy = self.config['joystick']
-        for direction, pin in joy.items():
+        for direction, pin in self.config['joystick'].items():
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(
-                pin, GPIO.BOTH,
-                callback=lambda ch, d=direction: self._on_joy(ch, d),
-                bouncetime=self.debounce_ms,
-            )
+            self._pins.append({'pin': pin, 'kind': 'joy', 'name': direction})
+            self._stable[pin] = self._pending[pin] = False
+            self._since[pin] = now
             self._log(f"  joystick {direction:5s} → GPIO {pin}")
 
-        buttons = self.config['buttons']
-        for name, cfg in buttons.items():
+        for name, cfg in self.config['buttons'].items():
             pin = cfg['gpio']
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            GPIO.add_event_detect(
-                pin, GPIO.BOTH,
-                callback=lambda ch, c=cfg, n=name: self._on_button(ch, n, c),
-                bouncetime=self.debounce_ms,
-            )
+            self._pins.append({
+                'pin': pin, 'kind': 'button',
+                'name': name, 'evdev_key': cfg['evdev_key'],
+            })
+            self._stable[pin] = self._pending[pin] = False
+            self._since[pin] = now
             self._log(f"  button   {name:12s} → GPIO {pin}")
 
     # ------------------------------------------------------------------ #
-    # Joystick                                                             #
-    # ------------------------------------------------------------------ #
 
-    def _on_joy(self, channel, direction):
-        pressed = not GPIO.input(channel)  # active-low: LOW = pressed
-        self._log(f"joy {direction} {'↓' if pressed else '↑'}")
+    def poll_forever(self):
+        while True:
+            self._poll_once(time.monotonic())
+            time.sleep(POLL_INTERVAL)
 
-        with self._lock:
-            self._joy_state[direction] = pressed
-            x = int(self._joy_state['right']) - int(self._joy_state['left'])
-            y = int(self._joy_state['down']) - int(self._joy_state['up'])
+    def _poll_once(self, now):
+        dirty = False
+        for spec in self._pins:
+            pin = spec['pin']
+            pressed = GPIO.input(pin) == 0  # active-low: LOW = pressed
 
-        self.ui.write(e.EV_ABS, e.ABS_X, x)
-        self.ui.write(e.EV_ABS, e.ABS_Y, y)
+            if pressed != self._pending[pin]:
+                self._pending[pin] = pressed
+                self._since[pin] = now
+                continue
+
+            if pressed == self._stable[pin]:
+                continue
+
+            if now - self._since[pin] < self.debounce_s:
+                continue
+
+            self._stable[pin] = pressed
+            if spec['kind'] == 'joy':
+                self._joy_state[spec['name']] = pressed
+                dirty = True
+            else:
+                self._emit_button(spec, pressed)
+
+        if dirty:
+            self._emit_axes()
+
+    def _emit_axes(self):
+        x = int(self._joy_state['right']) - int(self._joy_state['left'])
+        y = int(self._joy_state['down']) - int(self._joy_state['up'])
+        if x != self._axis['x']:
+            self._axis['x'] = x
+            self.ui.write(e.EV_ABS, e.ABS_X, x)
+            self._log(f"axis X → {x}")
+        if y != self._axis['y']:
+            self._axis['y'] = y
+            self.ui.write(e.EV_ABS, e.ABS_Y, y)
+            self._log(f"axis Y → {y}")
         self.ui.syn()
 
-    # ------------------------------------------------------------------ #
-    # Buttons                                                              #
-    # ------------------------------------------------------------------ #
-
-    def _on_button(self, channel, name, cfg):
-        pressed = not GPIO.input(channel)  # active-low
-
-        key_name = cfg['evdev_key']
-        key_code = getattr(e, key_name)
-        value = 1 if pressed else 0
-        self._log(f"button {name} {'↓' if pressed else '↑'} → {key_name}")
-        self.ui.write(e.EV_KEY, key_code, value)
+    def _emit_button(self, spec, pressed):
+        key_code = getattr(e, spec['evdev_key'])
+        self._log(f"button {spec['name']} {'↓' if pressed else '↑'} → {spec['evdev_key']}")
+        self.ui.write(e.EV_KEY, key_code, 1 if pressed else 0)
         self.ui.syn()
 
     # ------------------------------------------------------------------ #
 
     def cleanup(self):
+        # Release every held input so a restart never inherits a stuck state.
+        try:
+            for spec in self._pins:
+                if spec['kind'] == 'button' and self._stable[spec['pin']]:
+                    self.ui.write(e.EV_KEY, getattr(e, spec['evdev_key']), 0)
+            self.ui.write(e.EV_ABS, e.ABS_X, 0)
+            self.ui.write(e.EV_ABS, e.ABS_Y, 0)
+            self.ui.syn()
+        except Exception:
+            pass
         GPIO.cleanup()
         self.ui.close()
         self._log("GPIO cleaned up.")
@@ -149,9 +196,7 @@ def main():
     signal.signal(signal.SIGTERM, shutdown)
     signal.signal(signal.SIGINT, shutdown)
 
-    # Main thread just keeps the process alive; GPIO callbacks run on their own threads.
-    while True:
-        time.sleep(60)
+    arcade.poll_forever()
 
 
 if __name__ == '__main__':
