@@ -165,7 +165,12 @@ Start:
 | Coin | Insert credit | — |
 | Start | Player 1 Start | — |
 
-**Coin and Start** are now separate dedicated buttons. Press **Coin** to insert a credit, then **Start** to begin play — the same two-step you'd do on a real cabinet.
+**Coin and Start** are separate dedicated buttons. Press **Coin** to insert a credit, then **Start** to begin play — the same two-step you'd do on a real cabinet.
+
+**Combos** (no dedicated button — like a real cabinet's service switches):
+
+- **Exit a game:** Coin + Start together (RetroArch hotkey).
+- **2-Player Start:** hold **Coin + BTN 6** together. The GPIO daemon emits this on a second virtual gamepad, so MAME reads it as 2-Player Start. Insert two credits first (Coin twice). Only useful for *alternating* two-player games where players take turns on the one panel — simultaneous games need a second set of controls this cabinet doesn't have. The combo is set in `config/gpio_map.json` under `chords` if you want to change which buttons trigger it.
 
 ---
 

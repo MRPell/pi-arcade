@@ -51,6 +51,13 @@ GAMEPAD_CAPS = {
     ],
 }
 
+# Player-2 virtual gamepad. Exists only to give MAME a port-2 Start input for
+# alternating two-player games; a chord with "device": 2 is emitted here so
+# MAME reads it as 2-Player Start. Created only when a chord needs it.
+GAMEPAD2_CAPS = {
+    e.EV_KEY: [e.BTN_SOUTH, e.BTN_START],
+}
+
 
 def load_config():
     with open(CONFIG_PATH) as f:
@@ -73,11 +80,15 @@ class ArcadeInput:
         self._stable = {}
         self._pending = {}
         self._since = {}
+        self._chords = []        # list of dicts: name, pins, key_code, ui, active
 
         self.ui = UInput(GAMEPAD_CAPS, name='Pi Arcade Controller', version=0x1)
         self._log(f"Virtual gamepad created: {self.ui.device.path}")
 
+        self.ui2 = None          # created lazily if a chord targets device 2
+
         self._setup_gpio()
+        self._setup_chords()
 
     def _log(self, msg):
         if self.verbose:
@@ -104,6 +115,26 @@ class ArcadeInput:
             self._stable[pin] = self._pending[pin] = False
             self._since[pin] = now
             self._log(f"  button   {name:12s} → GPIO {pin}")
+
+    def _setup_chords(self):
+        buttons = self.config['buttons']
+        for name, cfg in self.config.get('chords', {}).items():
+            pins = [buttons[b]['gpio'] for b in cfg['buttons']]
+            if cfg.get('device') == 2:
+                if self.ui2 is None:
+                    self.ui2 = UInput(GAMEPAD2_CAPS, name='Pi Arcade Controller P2', version=0x1)
+                    self._log(f"Virtual gamepad 2 created: {self.ui2.device.path}")
+                ui = self.ui2
+            else:
+                ui = self.ui
+            self._chords.append({
+                'name': name,
+                'pins': pins,
+                'key_code': getattr(e, cfg['evdev_key']),
+                'ui': ui,
+                'active': False,
+            })
+            self._log(f"  chord    {name:12s} ← {' + '.join(cfg['buttons'])}")
 
     # ------------------------------------------------------------------ #
 
@@ -139,6 +170,22 @@ class ArcadeInput:
         if dirty:
             self._emit_axes()
 
+        self._eval_chords()
+
+    def _eval_chords(self):
+        for chord in self._chords:
+            held = all(self._stable[p] for p in chord['pins'])
+            if held and not chord['active']:
+                chord['active'] = True
+                chord['ui'].write(e.EV_KEY, chord['key_code'], 1)
+                chord['ui'].syn()
+                self._log(f"chord {chord['name']} ↓")
+            elif not held and chord['active']:
+                chord['active'] = False
+                chord['ui'].write(e.EV_KEY, chord['key_code'], 0)
+                chord['ui'].syn()
+                self._log(f"chord {chord['name']} ↑")
+
     def _emit_axes(self):
         x = int(self._joy_state['right']) - int(self._joy_state['left'])
         y = int(self._joy_state['down']) - int(self._joy_state['up'])
@@ -166,13 +213,20 @@ class ArcadeInput:
             for spec in self._pins:
                 if spec['kind'] == 'button' and self._stable[spec['pin']]:
                     self.ui.write(e.EV_KEY, getattr(e, spec['evdev_key']), 0)
+            for chord in self._chords:
+                if chord['active']:
+                    chord['ui'].write(e.EV_KEY, chord['key_code'], 0)
             self.ui.write(e.EV_ABS, e.ABS_X, 0)
             self.ui.write(e.EV_ABS, e.ABS_Y, 0)
             self.ui.syn()
+            if self.ui2 is not None:
+                self.ui2.syn()
         except Exception:
             pass
         GPIO.cleanup()
         self.ui.close()
+        if self.ui2 is not None:
+            self.ui2.close()
         self._log("GPIO cleaned up.")
 
 
