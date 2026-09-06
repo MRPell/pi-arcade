@@ -19,6 +19,7 @@ rsync -avz --progress \
   --exclude '__pycache__' \
   --exclude '*.pyc' \
   --exclude '.DS_Store' \
+  --exclude 'roms' \
   "$REPO_ROOT/" \
   "$PI_HOST:$PI_DIR/"
 
