@@ -64,6 +64,7 @@ They must match **MAME 0.78 / mame2003-plus** — other versions will not load:
 
 | Symptom | Fix |
 |---------|-----|
+| `apt-get` fails: `buster Release no longer has a release file` | The RetroPie image ships EOL Raspbian Buster. Repoint the OS repo to the archive, then re-run the installer: `echo 'deb http://legacy.raspbian.org/raspbian/ buster main contrib non-free rpi' \| sudo tee /etc/apt/sources.list && sudo apt-get -o Acquire::Check-Valid-Until=false update` |
 | Menus don't respond to the panel | Re-run controller config: EmulationStation → Start → **Configure Input** |
 | An input does nothing | GPIO pin doesn't match `config/gpio_map.json`; check daemon log: `journalctl -u pi-arcade-gpio -f` |
 | No sound over HDMI | Force HDMI audio in `raspi-config`, or set `hdmi_drive=2` in `/boot/config.txt` |

@@ -64,15 +64,20 @@ systemctl is-active "$SERVICE_NAME" && log "  active" || log "  FAILED — check
 # ------------------------------------------------------------------ #
 # 4. RetroPie / MAME
 # ------------------------------------------------------------------ #
-RETROPIE_SETUP="/home/pi/RetroPie-Setup/retropie_setup.sh"
-if [[ ! -f "$RETROPIE_SETUP" ]]; then
+# retropie_packages.sh is the non-interactive entrypoint. retropie_setup.sh is
+# the whiptail GUI wrapper — it always runs post_update/gui_setup first and
+# hangs on /dev/tty when invoked over SSH without a controlling terminal.
+RETROPIE_PACKAGES="/home/pi/RetroPie-Setup/retropie_packages.sh"
+if [[ ! -f "$RETROPIE_PACKAGES" ]]; then
   log "RetroPie-Setup not found. Cloning..."
   git clone --depth=1 https://github.com/RetroPie/RetroPie-Setup.git /home/pi/RetroPie-Setup
   chown -R pi:pi /home/pi/RetroPie-Setup
 fi
 
 log "Installing lr-mame2003-plus via RetroPie-Setup (this takes several minutes)..."
-bash "$RETROPIE_SETUP" packages lr-mame2003-plus install_bin
+__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus depends
+__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus install_bin
+__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus configure
 
 # ------------------------------------------------------------------ #
 # 5. ROM directory
