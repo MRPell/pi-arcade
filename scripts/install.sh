@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # install.sh — Runs on the Raspberry Pi.
 # Installs dependencies, configures uinput, deploys and enables the GPIO daemon,
-# and installs lr-mame2003-plus via RetroPie-Setup if not already present.
+# installs the RetroArch controller profiles, and installs lr-mame2003-plus via
+# RetroPie-Setup if not already present.
 #
 # Usage: bash /home/pi/pi-arcade/scripts/install.sh
 
@@ -12,6 +13,8 @@ ROMS_DIR="/home/pi/RetroPie/roms/mame-libretro"
 SERVICE_NAME="pi-arcade-gpio"
 SERVICE_SRC="$REPO_DIR/systemd/pi-arcade-gpio.service"
 SERVICE_DST="/etc/systemd/system/pi-arcade-gpio.service"
+AUTOCONFIG_SRC="$REPO_DIR/config/retroarch-autoconfig"
+AUTOCONFIG_DST="/opt/retropie/configs/all/retroarch/autoconfig"
 
 log() { echo "[install] $*"; }
 
@@ -60,6 +63,18 @@ systemctl enable "$SERVICE_NAME"
 systemctl restart "$SERVICE_NAME"
 log "GPIO daemon started. Status:"
 systemctl is-active "$SERVICE_NAME" && log "  active" || log "  FAILED — check: journalctl -u $SERVICE_NAME"
+
+# ------------------------------------------------------------------ #
+# 3b. RetroArch controller profile for the 2nd virtual pad
+# ------------------------------------------------------------------ #
+# The daemon's player2_start chord emits Start on "Pi Arcade Controller P2".
+# Without this autoconfig RetroArch does not know that pad's Start button, so
+# the chord never reaches MAME as 2-Player Start.
+if [[ -d "$AUTOCONFIG_SRC" && -d "$AUTOCONFIG_DST" ]]; then
+  log "Installing RetroArch autoconfig profiles..."
+  cp "$AUTOCONFIG_SRC"/*.cfg "$AUTOCONFIG_DST"/
+  chown pi:pi "$AUTOCONFIG_DST"/*.cfg
+fi
 
 # ------------------------------------------------------------------ #
 # 4. RetroPie / MAME
