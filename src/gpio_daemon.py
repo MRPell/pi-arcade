@@ -24,11 +24,16 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', 'config', 'gpio_map.
 
 # Virtual gamepad capabilities exposed to the OS.
 # Joystick axes: ABS_X (left/right) and ABS_Y (up/down), range -1..1.
-# Buttons: BTN_SOUTH (fire), BTN_EAST (action2), BTN_SELECT (coin), BTN_START (start).
+# Buttons: BTN_SOUTH (fire), BTN_EAST (action2), BTN_NORTH (action3),
+# BTN_WEST (action4), BTN_TL (action5), BTN_TR (action6), BTN_SELECT (coin), BTN_START (start).
 GAMEPAD_CAPS = {
     e.EV_KEY: [
         e.BTN_SOUTH,    # fire / primary action
         e.BTN_EAST,     # secondary action
+        e.BTN_NORTH,    # tertiary action
+        e.BTN_WEST,     # quaternary action
+        e.BTN_TL,       # fifth action / L shoulder
+        e.BTN_TR,       # sixth action / R shoulder
         e.BTN_SELECT,   # coin insert
         e.BTN_START,    # player 1 start
     ],
@@ -109,43 +114,11 @@ class ArcadeInput:
     def _on_button(self, channel, name, cfg):
         pressed = not GPIO.input(channel)  # active-low
 
-        action = cfg.get('action')
-        if action == 'coin_start_sequence':
-            if pressed:
-                self._log("coin_start triggered")
-                threading.Thread(
-                    target=self._coin_start_sequence,
-                    args=(cfg,),
-                    daemon=True,
-                ).start()
-            # ignore release — the sequence handles its own key-ups
-            return
-
-        key_name = cfg.get('evdev_key')
+        key_name = cfg['evdev_key']
         key_code = getattr(e, key_name)
         value = 1 if pressed else 0
         self._log(f"button {name} {'↓' if pressed else '↑'} → {key_name}")
         self.ui.write(e.EV_KEY, key_code, value)
-        self.ui.syn()
-
-    def _coin_start_sequence(self, cfg):
-        """Press SELECT (coin insert), release, wait, press START, release."""
-        coin_hold  = cfg.get('coin_hold_ms', 100) / 1000.0
-        gap        = cfg.get('start_delay_ms', 200) / 1000.0
-        start_hold = cfg.get('start_hold_ms', 100) / 1000.0
-
-        self.ui.write(e.EV_KEY, e.BTN_SELECT, 1)
-        self.ui.syn()
-        time.sleep(coin_hold)
-        self.ui.write(e.EV_KEY, e.BTN_SELECT, 0)
-        self.ui.syn()
-
-        time.sleep(gap)
-
-        self.ui.write(e.EV_KEY, e.BTN_START, 1)
-        self.ui.syn()
-        time.sleep(start_hold)
-        self.ui.write(e.EV_KEY, e.BTN_START, 0)
         self.ui.syn()
 
     # ------------------------------------------------------------------ #

@@ -17,13 +17,35 @@
       "evdev_key": "BTN_EAST",
       "_comment": "Secondary action (barrel roll in 1942, etc). Maps to RetroPad B button."
     },
-    "coin_start": {
+    "action3": {
       "gpio": 25,
-      "action": "coin_start_sequence",
-      "coin_hold_ms": 100,
-      "start_delay_ms": 200,
-      "start_hold_ms": 100,
-      "_comment": "Sends coin insert (BTN_SELECT) then Player 1 Start (BTN_START) automatically."
+      "evdev_key": "BTN_NORTH",
+      "_comment": "Tertiary action. Maps to RetroPad X button."
+    },
+    "action4": {
+      "gpio": 12,
+      "evdev_key": "BTN_WEST",
+      "_comment": "Quaternary action. Maps to RetroPad Y button."
+    },
+    "action5": {
+      "gpio": 16,
+      "evdev_key": "BTN_TL",
+      "_comment": "Fifth action. Maps to RetroPad L shoulder button."
+    },
+    "action6": {
+      "gpio": 13,
+      "evdev_key": "BTN_TR",
+      "_comment": "Sixth action. Maps to RetroPad R shoulder button."
+    },
+    "coin": {
+      "gpio": 19,
+      "evdev_key": "BTN_SELECT",
+      "_comment": "Insert credit. Maps to RetroPad Select."
+    },
+    "start": {
+      "gpio": 26,
+      "evdev_key": "BTN_START",
+      "_comment": "Player 1 Start. Maps to RetroPad Start."
     }
   },
   "debounce_ms": 20

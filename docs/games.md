@@ -1,7 +1,7 @@
 # Game List
 
-Top 10 single-player high-score arcade games playable with a 4-way joystick and 3 buttons.
-All run via MAME (lr-mame2003-plus) in RetroPie.
+Top 10 single-player high-score arcade games playable with a 4-way joystick and the action buttons.
+All run via MAME (lr-mame2003-plus) in RetroPie. Every game here needs at most BTN 1 and BTN 2.
 
 ---
 
@@ -12,7 +12,9 @@ All run via MAME (lr-mame2003-plus) in RetroPie.
 | Joystick | Player movement / direction |
 | BTN 1 | Fire / primary action |
 | BTN 2 | Secondary action (game-specific) |
-| BTN 3 | Insert coin + Start |
+| BTN 3–6 | Extra action buttons (unused by these games) |
+| Coin | Insert credit |
+| Start | Player 1 Start |
 
 ---
 
@@ -163,3 +165,8 @@ Copy these `.zip` files to `/home/pi/RetroPie/roms/mame-libretro/` on the Pi. Do
 ## MAME Version Note
 
 This setup uses **lr-mame2003-plus** (MAME version ~0.78). ROMs must match this version. If a game doesn't load, the ROM set version is likely mismatched. The MAME 0.78 ROM set is the correct target.
+
+- [mame2003-plus compatibility list](https://docs.libretro.com/library/mame_2003_plus/)
+- [MAME free/legal ROMs](https://www.mamedev.org/roms/)
+
+ROMs must be legally obtained — dumped from hardware you own, or from an official re-release.

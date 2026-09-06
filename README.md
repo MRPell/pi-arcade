@@ -2,7 +2,7 @@
 
 Single-player high-score arcade cabinet running on a Raspberry Pi 3 Model B.
 
-**Hardware:** Pi 3B v1.2 · 4-way joystick · 3 buttons · breadboard
+**Hardware:** Pi 3B v1.2 · 4-way joystick · 8 buttons (6 action + Coin + Start) · breadboard
 **Software:** RetroPie · MAME (lr-mame2003-plus) · custom GPIO daemon
 
 ---
@@ -11,7 +11,7 @@ Single-player high-score arcade cabinet running on a Raspberry Pi 3 Model B.
 
 ### 1. Flash RetroPie
 
-Download the RetroPie image for Pi 3 and flash it to a microSD card with Raspberry Pi Imager or Balena Etcher. Boot the Pi and complete initial RetroPie setup.
+Download the **RetroPie image for RPi 2/3** from [retropie.org.uk/download](https://retropie.org.uk/download/) and flash it to a microSD card with [Raspberry Pi Imager](https://www.raspberrypi.com/software/) (choose "Use custom") or [Balena Etcher](https://etcher.balena.io/). Boot the Pi and complete initial RetroPie setup.
 
 ### 2. Enable SSH on the Pi
 
@@ -39,11 +39,36 @@ That's it. The installer handles dependencies, the GPIO daemon, and the RetroPie
 
 See [docs/hardware-setup.md](docs/hardware-setup.md) for the complete wiring guide.
 
+Confirm your actual GPIO pins match [config/gpio_map.json](config/gpio_map.json) — a mismatched pin gives a dead input with no error.
+
 ### 5. Copy your ROMs
 
-ROMs are not included. Copy MAME ROM zips to `/home/pi/RetroPie/roms/mame-libretro/` on the Pi.
+ROMs are **not included** and must be legally obtained — dumped from hardware you own, or from an official re-release. Copy the MAME ROM zips to `/home/pi/RetroPie/roms/mame-libretro/` on the Pi (see [RetroPie: Transferring ROMs](https://retropie.org.uk/docs/Transferring-Roms/)).
 
-See [docs/games.md](docs/games.md) for the 10 games and their exact ROM filenames.
+They must match **MAME 0.78 / mame2003-plus** — other versions will not load:
+
+- [MAME free/legal ROMs](https://www.mamedev.org/roms/) — the officially redistributable sets
+- [mame2003-plus compatibility list](https://docs.libretro.com/library/mame_2003_plus/) — which games this core runs
+- [docs/games.md](docs/games.md) — the 10 games and their exact ROM filenames
+
+### 6. Connect the TV and first boot
+
+- Plug in **HDMI before powering on** — the Pi 3 only detects the display at boot; hotplug is unreliable.
+- `sudo reboot` the Pi.
+- On first boot, EmulationStation prompts to **configure a controller** — move the joystick and press the buttons as shown. Do this once or the menus won't respond to your panel. The GPIO daemon presents a virtual pad named `Pi Arcade Controller`.
+- Pick a game and play. Inside MAME, **Coin** inserts a credit and **Start** begins play.
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Menus don't respond to the panel | Re-run controller config: EmulationStation → Start → **Configure Input** |
+| An input does nothing | GPIO pin doesn't match `config/gpio_map.json`; check daemon log: `journalctl -u pi-arcade-gpio -f` |
+| No sound over HDMI | Force HDMI audio in `raspi-config`, or set `hdmi_drive=2` in `/boot/config.txt` |
+| Picture edges cut off | Adjust overscan in RetroPie → **Configuration → Video** |
+| Game won't load | ROM set isn't MAME 0.78 / mame2003-plus |
 
 ---
 
