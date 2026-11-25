@@ -12,7 +12,7 @@ Copy ROMs to `/home/pi/RetroPie/roms/megadrive/` on the Pi. Supported formats: `
 
 ROMs are **not included** and `make deploy` deliberately skips the `roms/` folder, so copy them to the Pi directly. They must be legally obtained — dumped from hardware you own, or from an official re-release.
 
-Filenames are free-form (EmulationStation shows whatever the file is called). The standard No-Intro names below keep the game list tidy.
+The cabinet's working set is on the Pi in `/home/pi/RetroPie/roms/megadrive/`; Mac copies are kept in `roms/megadrive/` (gitignored). EmulationStation displays the ROM filename, so the names below match the installed files.
 
 ---
 
@@ -43,50 +43,48 @@ The panel's joystick is 4-way, while these games were designed for an 8-way pad.
 
 ## Game List
 
-Exact filenames vary by ROM set; these are the standard No-Intro names.
-
 ### Sonic
 
 | Game | ROM filename | Notes |
 |------|--------------|-------|
-| Sonic the Hedgehog | `Sonic the Hedgehog (USA, Europe).md` | Platformer; any action button jumps |
-| Sonic the Hedgehog 2 | `Sonic the Hedgehog 2 (World).md` | Adds spin dash (Down + jump) and Tails |
-| Sonic the Hedgehog 3 | `Sonic the Hedgehog 3 (USA).md` | Spin dash, elemental shields |
-| Sonic & Knuckles | `Sonic & Knuckles (World).md` | Play as Knuckles; lock-on with Sonic 3 is not configured |
-| Sonic Spinball | `Sonic the Hedgehog Spinball (USA).md` | Pinball; flippers on the action buttons |
-| Dr. Robotnik's Mean Bean Machine | `Dr. Robotnik's Mean Bean Machine (USA).md` | Puzzle; D-pad + rotate buttons |
-| Sonic 3D Blast | `Sonic 3D Blast (USA).md` | Isometric platformer |
+| Sonic the Hedgehog | `Sonic the Hedgehog (USA, Europe).zip` | Platformer; any action button jumps |
+| Sonic the Hedgehog 2 | `Sonic the Hedgehog 2 (World).zip` | Adds spin dash (Down + jump) and Tails |
+| Sonic the Hedgehog 3 | `Sonic the Hedgehog 3 (USA).zip` | Spin dash, elemental shields |
+| Sonic & Knuckles | `Sonic & Knuckles (World).zip` | Play as Knuckles; lock-on with Sonic 3 is not configured |
+| Sonic Spinball | `Sonic Spinball (USA).zip` | Pinball; flippers on the action buttons |
+| Dr. Robotnik's Mean Bean Machine | `Dr. Robotnik's Mean Bean Machine (USA).zip` | Puzzle; D-pad + rotate buttons |
+| Sonic 3D Blast | `Sonic 3D Blast ~ Sonic 3D Flickies' Island (USA, Europe, Korea).zip` | Isometric platformer |
 
 ### Platformers
 
 | Game | ROM filename | Notes |
 |------|--------------|-------|
-| The Lion King | `Lion King, The (World).md` | Platformer |
-| Aladdin | `Aladdin (USA).md` | Platformer; Genesis version has the sword |
-| Ecco the Dolphin | `Ecco the Dolphin (USA, Europe).md` | Swimming uses diagonals; 4-way stick makes it harder |
-| Ecco: The Tides of Time | `Ecco - The Tides of Time (USA).md` | Optional sequel |
+| The Lion King | `Lion King, The (World).zip` | Platformer |
+| Aladdin | `Aladdin (USA).zip` | Platformer; Genesis version has the sword |
+| Ecco the Dolphin | `Ecco the Dolphin (USA, Europe, Korea).zip` | Swimming uses diagonals; 4-way stick makes it harder |
+| Ecco: The Tides of Time | `Ecco - The Tides of Time (USA).zip` | Optional sequel |
 
 ### Run-and-gun
 
 | Game | ROM filename | Notes |
 |------|--------------|-------|
-| Contra: Hard Corps | `Contra - Hard Corps (USA).md` | Run-and-gun; 8-way aiming; hard |
-| Gunstar Heroes | `Gunstar Heroes (USA).md` | Run-and-gun; 8-way aiming |
-| Earthworm Jim | `Earthworm Jim (USA).md` | Platformer / run-and-gun |
+| Contra: Hard Corps | `Contra - Hard Corps (USA, Korea).zip` | Run-and-gun; 8-way aiming; hard |
+| Gunstar Heroes | `Gunstar Heroes (USA).zip` | Run-and-gun; 8-way aiming |
+| Earthworm Jim | `Earthworm Jim (USA).zip` | Platformer / run-and-gun |
 
 ### Fighters and brawlers
 
 | Game | ROM filename | Notes |
 |------|--------------|-------|
-| Streets of Rage 2 | `Streets of Rage 2 (USA).md` | Beat 'em up; best in the series |
-| Golden Axe | `Golden Axe (World).md` | Beat 'em up; arcade classic |
-| Street Fighter II': Special Champion Edition | `Street Fighter II' - Special Champion Edition (USA).md` | Fighter; uses all 6 action buttons |
-| Mortal Kombat II | `Mortal Kombat II (USA).md` | Fighter; uncensored Genesis version |
+| Streets of Rage 2 | `Streets of Rage 2 (USA).zip` | Beat 'em up; best in the series |
+| Golden Axe | `Golden Axe (World).zip` | Beat 'em up; arcade classic |
+| Street Fighter II': Special Champion Edition | `Street Fighter II' - Special Champion Edition (USA).zip` | Fighter; uses all 6 action buttons |
+| Mortal Kombat II | `Mortal Kombat II (World).zip` | Fighter; uncensored Genesis version |
 
 ### Exploration
 
 | Game | ROM filename | Notes |
 |------|--------------|-------|
-| ToeJam & Earl | `ToeJam & Earl (USA, Europe).md` | Co-op exploration; 8-way movement; single-player works by picking one character |
+| ToeJam & Earl | `ToeJam & Earl (USA, Europe, Korea).zip` | Co-op exploration; 8-way movement; single-player works by picking one character |
 
 Other reliable picks if you want more: Ristar, Vectorman, Columns, Road Rash II, ToeJam & Earl in Panic on Funkotron.
