@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # install.sh — Runs on the Raspberry Pi.
 # Installs dependencies, configures uinput, deploys and enables the GPIO daemon,
-# installs the RetroArch controller profiles, and installs lr-mame2003-plus via
-# RetroPie-Setup if not already present.
+# installs the RetroArch controller profiles, and installs the MAME and Sega
+# Genesis libretro cores via RetroPie-Setup if not already present.
 #
 # Usage: bash /home/pi/pi-arcade/scripts/install.sh
 
 set -euo pipefail
 
 REPO_DIR="/home/pi/pi-arcade"
-ROMS_DIR="/home/pi/RetroPie/roms/mame-libretro"
+MAME_ROMS_DIR="/home/pi/RetroPie/roms/mame-libretro"
+MEGADRIVE_ROMS_DIR="/home/pi/RetroPie/roms/megadrive"
 SERVICE_NAME="pi-arcade-gpio"
 SERVICE_SRC="$REPO_DIR/systemd/pi-arcade-gpio.service"
 SERVICE_DST="/etc/systemd/system/pi-arcade-gpio.service"
@@ -77,7 +78,7 @@ if [[ -d "$AUTOCONFIG_SRC" && -d "$AUTOCONFIG_DST" ]]; then
 fi
 
 # ------------------------------------------------------------------ #
-# 4. RetroPie / MAME
+# 4. RetroPie emulator cores
 # ------------------------------------------------------------------ #
 # retropie_packages.sh is the non-interactive entrypoint. retropie_setup.sh is
 # the whiptail GUI wrapper — it always runs post_update/gui_setup first and
@@ -89,19 +90,26 @@ if [[ ! -f "$RETROPIE_PACKAGES" ]]; then
   chown -R pi:pi /home/pi/RetroPie-Setup
 fi
 
-log "Installing lr-mame2003-plus via RetroPie-Setup (this takes several minutes)..."
-__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus depends
-__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus install_bin
-__nodialog=1 bash "$RETROPIE_PACKAGES" lr-mame2003-plus configure
+EMULATOR_CORES=(lr-mame2003-plus lr-genesis-plus-gx)
+
+log "Installing emulator cores via RetroPie-Setup (this takes several minutes)..."
+for core in "${EMULATOR_CORES[@]}"; do
+  log "  Installing $core..."
+  __nodialog=1 bash "$RETROPIE_PACKAGES" "$core" depends
+  __nodialog=1 bash "$RETROPIE_PACKAGES" "$core" install_bin
+  __nodialog=1 bash "$RETROPIE_PACKAGES" "$core" configure
+done
 
 # ------------------------------------------------------------------ #
-# 5. ROM directory
+# 5. ROM directories
 # ------------------------------------------------------------------ #
-if [[ ! -d "$ROMS_DIR" ]]; then
-  log "Creating MAME ROM directory: $ROMS_DIR"
-  mkdir -p "$ROMS_DIR"
-  chown pi:pi "$ROMS_DIR"
-fi
+for roms_dir in "$MAME_ROMS_DIR" "$MEGADRIVE_ROMS_DIR"; do
+  if [[ ! -d "$roms_dir" ]]; then
+    log "Creating ROM directory: $roms_dir"
+    mkdir -p "$roms_dir"
+    chown pi:pi "$roms_dir"
+  fi
+done
 
 # ------------------------------------------------------------------ #
 # 6. Done
@@ -116,8 +124,10 @@ Next steps:
   2. Verify config/gpio_map.json matches your actual GPIO pins
   3. Copy MAME ROMs to: /home/pi/RetroPie/roms/mame-libretro/
      See docs/games.md for the exact ROM filenames.
-  4. Reboot the Pi: sudo reboot
-  5. On first boot into RetroPie, configure the controller when prompted
+  4. Copy Sega Genesis ROMs to: /home/pi/RetroPie/roms/megadrive/
+     See docs/sega-genesis.md for the game list and controls.
+  5. Reboot the Pi: sudo reboot
+  6. On first boot into RetroPie, configure the controller when prompted
      (move the joystick and press buttons as shown on screen)
 
 GPIO daemon log:
