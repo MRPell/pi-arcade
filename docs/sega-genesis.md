@@ -88,3 +88,7 @@ The panel's joystick is 4-way, while these games were designed for an 8-way pad.
 | ToeJam & Earl | `ToeJam & Earl (USA, Europe, Korea).zip` | Co-op exploration; 8-way movement; single-player works by picking one character |
 
 Other reliable picks if you want more: Ristar, Vectorman, Columns, Road Rash II, ToeJam & Earl in Panic on Funkotron.
+
+## Troubleshooting
+
+**A game fails with an FBNeo error.** The system default emulator got switched to `lr-fbneo-md` (usually by choosing "select default emulator for system" in the launch menu). FBNeo only accepts its own romset names (e.g. `md_tjam.zip`), so every No-Intro-named ROM here fails. Press a button while the game is launching, choose "select default emulator for system", and pick `lr-genesis-plus-gx`. Re-running `scripts/install.sh` also restores it.

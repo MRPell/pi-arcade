@@ -102,6 +102,22 @@ for core in "${EMULATOR_CORES[@]}"; do
   __nodialog=1 bash "$RETROPIE_PACKAGES" "$core" configure
 done
 
+# The ROMs use No-Intro names, which lr-fbneo's console subsystems reject
+# (they want FBNeo romset names like md_tjam.zip). Picking a "default emulator
+# for system" in the runcommand menu rewrites these, so re-pin them here.
+declare -A SYSTEM_DEFAULTS=(
+  [megadrive]=lr-genesis-plus-gx
+  [nes]=lr-fceumm
+  [snes]=lr-snes9x2010
+)
+for system in "${!SYSTEM_DEFAULTS[@]}"; do
+  emulators_cfg="/opt/retropie/configs/$system/emulators.cfg"
+  if [[ -f "$emulators_cfg" ]]; then
+    log "Setting $system default emulator to ${SYSTEM_DEFAULTS[$system]}"
+    sed -i "s/^default = .*/default = \"${SYSTEM_DEFAULTS[$system]}\"/" "$emulators_cfg"
+  fi
+done
+
 # ------------------------------------------------------------------ #
 # 5. ROM directories
 # ------------------------------------------------------------------ #
