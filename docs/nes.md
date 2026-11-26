@@ -51,7 +51,7 @@ The top 10 for an arcade panel: short sessions, high scores or fast restarts, an
 | 9 | Ninja Gaiden | Action platformer | B sword, Up + B sub-weapon, A jump. Hard, with checkpoints |
 | 10 | Tetris | Puzzle | B/A rotate, Down drops. Score-chasing classic |
 
-Other reliable picks: Super C (the Contra sequel), Double Dragon II, Bubble Bobble, Kirby's Adventure, Galaga.
+Other reliable picks: Super C (the Contra sequel), Super Mario Bros. 2 (B picks up and throws, A jumps, hold Down to charge a super jump), Double Dragon II, Bubble Bobble, Kirby's Adventure, Galaga.
 
 For a longer game, **The Legend of Zelda** plays well (B uses the item in the B slot, A swings the sword, Start opens the inventory). It saves to battery-backed cartridge RAM, which RetroArch writes to disk when the game exits, so quit with Coin + Start before cutting power.
 
