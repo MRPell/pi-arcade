@@ -51,4 +51,25 @@ The cabinet's RetroArch profile (shipped in `config/retroarch-autoconfig/`) maps
 | 9 | Super Mario Kart | Racing | B accelerate, Y brake, L/R hop/drift, A item |
 | 10 | The Legend of Zelda: A Link to the Past | Action adventure | B sword, Y item, A action. Battery saves work, so progress persists |
 
-Other reliable picks: Super Castlevania IV, F-Zero, Tetris Attack, Final Fight, Kirby Super Star.
+Other reliable picks: Super Castlevania IV, F-Zero, Tetris Attack, Final Fight.
+
+### Also installed
+
+| Game | Notes |
+|------|-------|
+| Donkey Kong Country 2: Diddy's Kong Quest | Same controls as Donkey Kong Country |
+| Mega Man X2 | Same controls as Mega Man X |
+| Kirby Super Star | Several short games in one; good for quick sessions |
+| Super Bomberman | B drops a bomb. The multiplayer mode needs extra pads |
+| NBA Jam | 2-on-2 arcade basketball, played against the CPU here |
+| Mortal Kombat II | Fighter. Uses the 6 buttons plus block |
+| Killer Instinct | Fighter. Uses all 6 buttons |
+| Super Mario RPG: Legend of the Seven Stars | RPG with timed button presses |
+| Chrono Trigger | RPG |
+| Final Fantasy III (FF VI in Japan) | RPG |
+| EarthBound | RPG |
+| Secret of Mana | Action RPG |
+| Super Mario World 2: Yoshi's Island | Uses the Super FX 2 chip and may slow down on a Pi 3 |
+| Star Fox | Uses the Super FX chip and may slow down on a Pi 3 |
+
+The RPGs and Kirby Super Star use battery saves, which RetroArch writes to disk when the game exits. Quit with Coin + Start before cutting power.

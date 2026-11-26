@@ -55,4 +55,22 @@ Other reliable picks: Super C (the Contra sequel), Super Mario Bros. 2 (B picks 
 
 For a longer game, **The Legend of Zelda** plays well (B uses the item in the B slot, A swings the sword, Start opens the inventory). It saves to battery-backed cartridge RAM, which RetroArch writes to disk when the game exits, so quit with Coin + Start before cutting power.
 
+### Also installed
+
+| Game | Notes |
+|------|-------|
+| Zelda II: The Adventure of Link | B sword, A jump. Battery save, so quit with Coin + Start |
+| Metroid | B fire, A jump. Password saves: write the password down on the game-over screen |
+| Kid Icarus | B arrows, A jump. Password saves |
+| Mega Man 3 | B fire, A jump, Down + A slides |
+| Castlevania III: Dracula's Curse | Same controls as Castlevania. Branching paths and partner characters |
+| Ninja Gaiden II | Same controls as Ninja Gaiden |
+| DuckTales | B action, A jump; hold Down + B in mid-air to pogo |
+| Blaster Master | B fire, A jump; Select leaves or enters the tank |
+| Galaga | A or B fire. Arcade port |
+| Dr. Mario | B/A rotate, Down drops |
+| Gradius | B fire, A power-up |
+| Ice Hockey | B shoot, A pass |
+| Tecmo Bowl | B/A select plays and pass targets |
+
 Skip **Duck Hunt** and other Zapper games, because they need the light gun.
