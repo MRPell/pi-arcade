@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # install.sh — Runs on the Raspberry Pi.
 # Installs dependencies, configures uinput, deploys and enables the GPIO daemon,
-# installs the RetroArch controller profiles, and installs the MAME and Sega
-# Genesis libretro cores via RetroPie-Setup if not already present.
+# installs the RetroArch controller profiles, and installs the MAME, Sega
+# Genesis, NES and SNES libretro cores via RetroPie-Setup if not already present.
 #
 # Usage: bash /home/pi/pi-arcade/scripts/install.sh
 
@@ -11,6 +11,8 @@ set -euo pipefail
 REPO_DIR="/home/pi/pi-arcade"
 MAME_ROMS_DIR="/home/pi/RetroPie/roms/mame-libretro"
 MEGADRIVE_ROMS_DIR="/home/pi/RetroPie/roms/megadrive"
+NES_ROMS_DIR="/home/pi/RetroPie/roms/nes"
+SNES_ROMS_DIR="/home/pi/RetroPie/roms/snes"
 SERVICE_NAME="pi-arcade-gpio"
 SERVICE_SRC="$REPO_DIR/systemd/pi-arcade-gpio.service"
 SERVICE_DST="/etc/systemd/system/pi-arcade-gpio.service"
@@ -90,7 +92,7 @@ if [[ ! -f "$RETROPIE_PACKAGES" ]]; then
   chown -R pi:pi /home/pi/RetroPie-Setup
 fi
 
-EMULATOR_CORES=(lr-mame2003-plus lr-genesis-plus-gx)
+EMULATOR_CORES=(lr-mame2003-plus lr-genesis-plus-gx lr-fceumm lr-snes9x2010)
 
 log "Installing emulator cores via RetroPie-Setup (this takes several minutes)..."
 for core in "${EMULATOR_CORES[@]}"; do
@@ -103,7 +105,7 @@ done
 # ------------------------------------------------------------------ #
 # 5. ROM directories
 # ------------------------------------------------------------------ #
-for roms_dir in "$MAME_ROMS_DIR" "$MEGADRIVE_ROMS_DIR"; do
+for roms_dir in "$MAME_ROMS_DIR" "$MEGADRIVE_ROMS_DIR" "$NES_ROMS_DIR" "$SNES_ROMS_DIR"; do
   if [[ ! -d "$roms_dir" ]]; then
     log "Creating ROM directory: $roms_dir"
     mkdir -p "$roms_dir"
@@ -126,8 +128,11 @@ Next steps:
      See docs/games.md for the exact ROM filenames.
   4. Copy Sega Genesis ROMs to: /home/pi/RetroPie/roms/megadrive/
      See docs/sega-genesis.md for the game list and controls.
-  5. Reboot the Pi: sudo reboot
-  6. On first boot into RetroPie, configure the controller when prompted
+  5. Copy NES ROMs to: /home/pi/RetroPie/roms/nes/
+     and SNES ROMs to: /home/pi/RetroPie/roms/snes/
+     See docs/nes.md and docs/snes.md for the game lists and controls.
+  6. Reboot the Pi: sudo reboot
+  7. On first boot into RetroPie, configure the controller when prompted
      (move the joystick and press buttons as shown on screen)
 
 GPIO daemon log:
