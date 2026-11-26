@@ -53,4 +53,6 @@ The top 10 for an arcade panel: short sessions, high scores or fast restarts, an
 
 Other reliable picks: Super C (the Contra sequel), Double Dragon II, Bubble Bobble, Kirby's Adventure, Galaga.
 
+For a longer game, **The Legend of Zelda** plays well (B uses the item in the B slot, A swings the sword, Start opens the inventory). It saves to battery-backed cartridge RAM, which RetroArch writes to disk when the game exits, so quit with Coin + Start before cutting power.
+
 Skip **Duck Hunt** and other Zapper games, because they need the light gun.
