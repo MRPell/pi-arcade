@@ -1,0 +1,348 @@
+<!doctype html>
+<!--
+  Printable cabinet guide (2 letter pages). Regenerate the PDF after editing:
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --no-pdf-header-footer \
+    --print-to-pdf=docs/cabinet-guide/cabinet-guide.pdf docs/cabinet-guide/guide.html
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pi Arcade Guide</title>
+<style>
+  @page { size: letter; margin: 0.4in; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif; color: #16161d; font-size: 10pt; }
+  .page { height: 10.2in; display: flex; flex-direction: column; break-after: page; }
+  .page:last-child { break-after: auto; }
+
+  /* Header */
+  header { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 4px solid #16161d; padding-bottom: 6px; margin-bottom: 10px; }
+  h1 { font-family: "Avenir Next Condensed", "Avenir Next", sans-serif; font-weight: 800; font-size: 30pt; letter-spacing: 0.5px; line-height: 1; margin: 0; text-transform: uppercase; }
+  h1 small { display: block; font-size: 11pt; font-weight: 600; letter-spacing: 2px; color: #5b5b6b; margin-bottom: 3px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: flex-end; max-width: 4.2in; font-size: 9pt; color: #3d3d4a; }
+  .legend span { white-space: nowrap; }
+
+  /* System tags */
+  .t { display: inline-block; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 7.5pt; letter-spacing: 0.4px; padding: 0.5px 4px; border-radius: 3px; color: #fff; vertical-align: 1px; }
+  .ARC { background: #d62f2f; } .NES { background: #4a4a57; } .SNES { background: #6b3fa0; }
+  .GEN { background: #1f5fbf; } .GBA { background: #0f8a7e; }
+  .s, .p { display: inline-block; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 7.5pt; padding: 0 3px; border-radius: 3px; border: 1px solid #9a9aa8; color: #3d3d4a; vertical-align: 1px; }
+
+  /* Category cards */
+  .cols { column-count: 3; column-gap: 0.18in; flex: 1; }
+  .cat { break-inside: avoid; margin: 0 0 0.14in; border: 2px solid var(--c); border-radius: 8px; overflow: hidden; }
+  .cat h2 { margin: 0; background: var(--c); color: #fff; font-family: "Avenir Next Condensed", sans-serif; font-weight: 800; font-size: 16pt; text-transform: uppercase; letter-spacing: 0.4px; padding: 5px 9px 3px; display: flex; justify-content: space-between; align-items: baseline; }
+  .cat h2 em { font-style: normal; font-size: 9pt; font-weight: 600; letter-spacing: 0.6px; opacity: 0.95; }
+  .cat .why { font-size: 9.5pt; color: #4a4a57; padding: 4px 8px 3px; line-height: 1.25; border-bottom: 1px dashed #d4d4dc; }
+  .cat ul { list-style: none; margin: 0; padding: 3px 8px 5px; }
+  .cat li { display: flex; justify-content: space-between; gap: 4px; font-family: "Avenir Next Condensed", sans-serif; font-weight: 500; font-size: 13pt; line-height: 1.36; }
+  .cat li .tags { white-space: nowrap; }
+  .cat li.star { font-weight: 700; }
+  .cat li.star::before { content: "\2605"; color: var(--c); margin-right: 3px; }
+  .cat li.star { justify-content: flex-start; }
+  .cat li.star .tags { margin-left: auto; }
+
+  .score  { --c: #d62f2f; }
+  .quick  { --c: #e07b00; }
+  .action { --c: #b8326b; }
+  .fight  { --c: #3a3a46; }
+  .plat   { --c: #1f8a3a; }
+  .hard   { --c: #111; }
+  .long   { --c: #1f5fbf; }
+
+  .newbie { break-inside: avoid; border-radius: 8px; background: #fff4d6; border: 2px solid #e0b100; padding: 7px 10px; font-size: 10.5pt; line-height: 1.35; }
+  .newbie b { font-family: "Avenir Next Condensed", sans-serif; font-size: 11pt; text-transform: uppercase; display: block; }
+  footer { font-size: 9pt; color: #5b5b6b; border-top: 1px solid #c9c9d3; padding-top: 4px; display: flex; justify-content: space-between; }
+
+  /* Page 2 */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2in; }
+  .box { border: 2px solid #16161d; border-radius: 8px; padding: 8px 10px; }
+  .box h3 { margin: 0 0 6px; font-family: "Avenir Next Condensed", sans-serif; font-weight: 800; font-size: 13pt; text-transform: uppercase; letter-spacing: 0.4px; }
+  .panel { display: flex; align-items: center; gap: 18px; justify-content: center; padding: 4px 0 2px; }
+  .stick { width: 62px; height: 62px; border-radius: 50%; border: 3px solid #16161d; position: relative; }
+  .stick::after { content: ""; position: absolute; inset: 17px; border-radius: 50%; background: #d62f2f; }
+  .btns { display: grid; grid-template-columns: repeat(3, 34px); gap: 8px 10px; }
+  .btn { width: 34px; height: 34px; border-radius: 50%; background: #16161d; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 12pt; }
+  .front { display: flex; justify-content: center; align-items: center; gap: 8px; border-top: 3px solid #16161d; margin: 6px 30px 0; padding-top: 5px; font-size: 8pt; color: #5b5b6b; }
+  .pill { border: 2px solid #16161d; border-radius: 12px; padding: 2px 9px; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 9pt; text-align: center; }
+  .note { font-size: 7.5pt; color: #5b5b6b; text-align: center; margin: 2px 0 6px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 10pt; }
+  th, td { border-bottom: 1px solid #d4d4dc; padding: 3px 4px; text-align: center; }
+  th { font-family: "Avenir Next Condensed", sans-serif; font-size: 8.5pt; }
+  td:first-child, th:first-child { text-align: left; font-weight: 700; }
+  td.dim { color: #b3b3bf; }
+
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 10.5pt; align-items: center; }
+  .k { font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; white-space: nowrap; }
+  .k i { font-style: normal; border: 1.5px solid #16161d; border-radius: 5px; padding: 0 5px; background: #f2f2f6; }
+  .warn { margin-top: 8px; background: #ffe3e3; border: 2px solid #d62f2f; border-radius: 8px; padding: 6px 9px; font-size: 9pt; line-height: 1.35; }
+  .warn b { color: #b31d1d; font-family: "Avenir Next Condensed", sans-serif; font-size: 11pt; text-transform: uppercase; }
+
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.12in; }
+  .card { border: 2px solid #d62f2f; border-radius: 8px; padding: 5px 7px 4px; }
+  .card h4 { margin: 0 0 2px; font-family: "Avenir Next Condensed", sans-serif; font-weight: 800; font-size: 12.5pt; text-transform: uppercase; display: flex; justify-content: space-between; align-items: baseline; }
+  .card h4 span { font-size: 7pt; font-weight: 600; color: #5b5b6b; text-transform: none; }
+  .line { display: grid; grid-template-columns: 14px 1fr 0.9fr; gap: 4px; align-items: end; height: 48px; font-size: 11pt; font-weight: 700; color: #d62f2f; }
+  .line div { border-bottom: 1px solid #9a9aa8; height: 100%; }
+  .cap { display: grid; grid-template-columns: 14px 1fr 0.9fr; gap: 4px; font-size: 6.5pt; color: #8a8a99; text-transform: uppercase; letter-spacing: 0.4px; }
+</style>
+</head>
+<body>
+
+<!-- ======================= PAGE 1: WHAT TO PLAY ======================= -->
+<section class="page">
+  <header>
+    <h1><small>Pi Arcade &middot; 104 games</small>What should I play?</h1>
+    <div class="legend">
+      <span><b class="t ARC">ARC</b> Arcade</span>
+      <span><b class="t NES">NES</b> Nintendo</span>
+      <span><b class="t SNES">SNES</b> Super Nintendo</span>
+      <span><b class="t GEN">GEN</b> Sega Genesis</span>
+      <span><b class="t GBA">GBA</b> Game Boy Advance</span>
+      <span>&#9733; start here</span>
+      <span><b class="s">S</b> saves progress</span>
+      <span><b class="p">P</b> password &mdash; write it down</span>
+    </div>
+  </header>
+
+  <div class="cols">
+    <div class="newbie" style="margin-bottom:0.14in">
+      <b>Never played? Start with these</b>
+      Pac-Man &middot; Super Mario World &middot; Sonic 2 &middot; Super Mario Kart. Each makes sense within 30 seconds.
+    </div>
+
+    <div class="cat score">
+      <h2>High Score Showdown <em>3&ndash;10 MIN</em></h2>
+      <div class="why">One life, one number. Beat the name on the board (back page).</div>
+      <ul>
+        <li class="star">Pac-Man <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li class="star">Galaga <span class="tags"><b class="t ARC">ARC</b> <b class="t NES">NES</b></span></li>
+        <li class="star">Donkey Kong <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Centipede <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Dig Dug <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Q*bert <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Frogger <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Space Invaders <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Joust <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Mario Bros. <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Arkanoid <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>1942 <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Tetris <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Dr. Mario <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Gradius <span class="tags"><b class="t NES">NES</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat quick">
+      <h2>Quick Fun <em>5&ndash;15 MIN</em></h2>
+      <div class="why">Races, matches and bouts. Easy to pick up, easy to put down.</div>
+      <ul>
+        <li class="star">Super Mario Kart <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li class="star">Excitebike <span class="tags"><b class="t NES">NES</b></span></li>
+        <li class="star">Mike Tyson's Punch-Out!! <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super Punch-Out!! <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Mario Kart: Super Circuit <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>F-Zero <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Star Fox <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>NBA Jam <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Tecmo Bowl <span class="tags"><b class="t ARC">ARC</b> <b class="t NES">NES</b></span></li>
+        <li>Ice Hockey <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super Bomberman <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Kirby Super Star <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Bubble Bobble <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Mean Bean Machine <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Sonic Spinball <span class="tags"><b class="t GEN">GEN</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat fight">
+      <h2>Fighters <em>VS THE CPU</em></h2>
+      <div class="why">Learn one character's moves and climb the ladder. Uses all six buttons.</div>
+      <ul>
+        <li class="star">Street Fighter II <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>Street Fighter II Turbo <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>SF II' Special Champion Ed. <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Mortal Kombat II <span class="tags"><b class="t SNES">SNES</b> <b class="t GEN">GEN</b></span></li>
+        <li>Killer Instinct <span class="tags"><b class="t SNES">SNES</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat action">
+      <h2>Blast Through It <em>20&ndash;45 MIN</em></h2>
+      <div class="why">Beat 'em ups and run-and-guns. Keep pressing Coin/continue and see the ending.</div>
+      <ul>
+        <li class="star">Metal Slug <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li class="star">Teenage Mutant Ninja Turtles <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li class="star">TMNT IV: Turtles in Time <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Metal Slug 2 &middot; X &middot; 3 <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>TMNT II: The Arcade Game <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Streets of Rage 2 <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Final Fight <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Golden Axe <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Double Dragon II <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Contra <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super C <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Contra III <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Contra: Hard Corps <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Gunstar Heroes <span class="tags"><b class="t GEN">GEN</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat plat">
+      <h2>Run &amp; Jump <em>30&ndash;90 MIN</em></h2>
+      <div class="why">Platformers. Play a few worlds, or settle in for the whole thing.</div>
+      <ul>
+        <li class="star">Super Mario World <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li class="star">Sonic the Hedgehog 2 <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li class="star">Super Mario Bros. 3 <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super Mario Bros. <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super Mario Bros. 2 <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Super Mario Bros. 3 (Advance 4) <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Yoshi's Island <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Donkey Kong Country <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Donkey Kong Country 2 <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Sonic the Hedgehog <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Sonic the Hedgehog 3 <span class="tags"><b class="t GEN">GEN</b> <b class="s">S</b></span></li>
+        <li>Sonic &amp; Knuckles <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Sonic 3D Blast <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Kirby's Adventure <span class="tags"><b class="t NES">NES</b> <b class="s">S</b></span></li>
+        <li>Wario Land 4 <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>DuckTales <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Aladdin <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>The Lion King <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Earthworm Jim <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>ToeJam &amp; Earl <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Astro Boy: Omega Factor <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Ecco the Dolphin <span class="tags"><b class="t GEN">GEN</b> <b class="p">P</b></span></li>
+        <li>Ecco: The Tides of Time <span class="tags"><b class="t GEN">GEN</b> <b class="p">P</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat hard">
+      <h2>Hard Mode <em>FOR THE BRAVE</em></h2>
+      <div class="why">Tough but fair. You'll die a lot, and get better each time.</div>
+      <ul>
+        <li class="star">Mega Man 2 <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
+        <li class="star">Mega Man X <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
+        <li>Mega Man 3 <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
+        <li>Mega Man X2 <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
+        <li>Castlevania <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Castlevania III <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
+        <li>Super Castlevania IV <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
+        <li>Ninja Gaiden <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Ninja Gaiden II <span class="tags"><b class="t NES">NES</b></span></li>
+        <li>Blaster Master <span class="tags"><b class="t NES">NES</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat long">
+      <h2>Long Journeys <em>HOURS</em></h2>
+      <div class="why">Adventures and RPGs. Play a while, save, come back another day.</div>
+      <ul>
+        <li class="star">Zelda: A Link to the Past <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li class="star">Pok&eacute;mon Emerald <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li class="star">Chrono Trigger <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Pok&eacute;mon FireRed / LeafGreen <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Super Metroid <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Metroid: Zero Mission <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Zelda: The Minish Cap <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>The Legend of Zelda <span class="tags"><b class="t NES">NES</b> <b class="s">S</b></span></li>
+        <li>Zelda II: Adventure of Link <span class="tags"><b class="t NES">NES</b> <b class="s">S</b></span></li>
+        <li>Metroid <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
+        <li>Kid Icarus <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
+        <li>Super Mario RPG <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Mario &amp; Luigi: Superstar Saga <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Final Fantasy III (VI) <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>EarthBound <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+        <li>Secret of Mana <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <span>Saves only stick if you quit with <b>Coin + Start</b>. Never just switch the cabinet off.</span>
+    <span>Controls &amp; high-score board on the back &rarr;</span>
+  </footer>
+</section>
+
+<!-- ======================= PAGE 2: HOW TO PLAY ======================= -->
+<section class="page">
+  <header>
+    <h1><small>Pi Arcade</small>How to play</h1>
+    <div class="legend" style="font-size:10pt; max-width:4.6in; text-align:right; display:block">
+      <b>In the menu:</b> stick Left/Right changes system, Up/Down picks a game.<br>
+      <b>Y</b> starts it &middot; <b>X</b> goes back.
+    </div>
+  </header>
+
+  <div class="row">
+    <div class="box">
+      <h3>The panel</h3>
+      <div class="panel">
+        <div class="stick"></div>
+        <div class="btns">
+          <div class="btn">Y</div><div class="btn">X</div><div class="btn">L</div>
+          <div class="btn">B</div><div class="btn">A</div><div class="btn">R</div>
+        </div>
+      </div>
+      <div class="front"><span>front of the cabinet:</span><div class="pill">COIN</div><div class="pill">START</div></div>
+      <div class="note">Super Nintendo, NES and Game Boy Advance games use the buttons as labelled. Arcade and Genesis games:</div>
+      <table>
+        <tr><th>Button</th><th><b class="t ARC">ARC</b></th><th><b class="t GEN">GEN</b></th></tr>
+        <tr><td>Y</td><td>Fire / main action</td><td>A</td></tr>
+        <tr><td>X</td><td>2nd action</td><td>Y</td></tr>
+        <tr><td>L</td><td>extra (fighters)</td><td>X</td></tr>
+        <tr><td>B</td><td>extra (fighters)</td><td>B</td></tr>
+        <tr><td>A</td><td>extra (fighters)</td><td>C</td></tr>
+        <tr><td>R</td><td>extra (fighters)</td><td>Z</td></tr>
+        <tr><td>Coin</td><td>Insert coin</td><td>Mode</td></tr>
+        <tr><td>Start</td><td>1-player Start</td><td>Start</td></tr>
+      </table>
+      <div class="note" style="margin:5px 0 0">Coin is Select on Nintendo systems. NES games use only <b>B</b> and <b>A</b>. Most Genesis games use Y, B and A.</div>
+    </div>
+
+    <div class="box">
+      <h3>Hold Coin and press&hellip;</h3>
+      <div class="keys">
+        <span class="k"><i>Coin</i> + <i>Start</i></span><span><b>Quit the game</b> (and save your progress)</span>
+        <span class="k"><i>Coin</i> + <i>R</i></span><span>Save state: a snapshot of right now</span>
+        <span class="k"><i>Coin</i> + <i>L</i></span><span>Load that snapshot</span>
+        <span class="k"><i>Coin</i> + <i>B</i></span><span>Restart the game</span>
+        <span class="k"><i>Coin</i> + <i>X</i></span><span>Emulator menu</span>
+      </div>
+      <h3 style="margin-top:10px">Arcade games</h3>
+      <div class="keys">
+        <span class="k"><i>Coin</i></span><span>Insert a credit (free, press as often as you like)</span>
+        <span class="k"><i>Start</i></span><span>1-player game</span>
+        <span class="k"><i>A</i> + <i>R</i></span><span>2-player game (insert 2 credits; take turns)</span>
+      </div>
+      <div class="warn">
+        <b>Don't lose your save!</b><br>
+        Games marked <b class="s">S</b> save only when you quit with <b>Coin + Start</b>. Switching off mid-game throws it away.
+        For <b class="p">P</b> games, write the password down. Save states (Coin + R) are a handy backup.
+      </div>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:0.2in; flex:1; border-color:#d62f2f">
+    <h3 style="color:#d62f2f">High score board <span style="font-size:9pt; color:#5b5b6b; text-transform:none; font-weight:600">&middot; beat a score? cross it out and write yours in</span></h3>
+    <div class="board">
+      <div class="card"><h4>Pac-Man <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Galaga <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Donkey Kong <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Centipede <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Dig Dug <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Q*bert <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Tetris <span>NES</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Excitebike <span>NES &middot; time</span></h4><div class="cap"><span></span><span>Name</span><span>Time</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Frogger <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Joust <span>ARC</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Super Mario Kart <span>SNES &middot; 50cc</span></h4><div class="cap"><span></span><span>Name</span><span>Time</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+      <div class="card"><h4>Your pick <span>________</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
