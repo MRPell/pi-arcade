@@ -3,7 +3,7 @@
 Single-player high-score arcade cabinet running on a Raspberry Pi 3 Model B.
 
 **Hardware:** Pi 3B v1.2 · 4-way joystick · 8 buttons (6 action + Coin + Start) · breadboard
-**Software:** RetroPie · MAME (lr-mame2003-plus) · Sega Genesis (lr-genesis-plus-gx) · NES (lr-fceumm) · SNES (lr-snes9x2010) · custom GPIO daemon
+**Software:** RetroPie · MAME (lr-mame2003-plus) · Sega Genesis (lr-genesis-plus-gx) · NES (lr-fceumm) · SNES (lr-snes9x2010) · Game Boy Advance (lr-mgba) · custom GPIO daemon
 
 ---
 
@@ -57,12 +57,14 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **SNES:** copy `.sfc` / `.smc` / `.zip` / `.7z` ROMs to `/home/pi/RetroPie/roms/snes/`. See [docs/snes.md](docs/snes.md).
 
+**Game Boy Advance:** copy `.gba` ROMs to `/home/pi/RetroPie/roms/gba/`. See [docs/gba.md](docs/gba.md).
+
 ### 6. Connect the TV and first boot
 
 - Plug in **HDMI before powering on** — the Pi 3 only detects the display at boot; hotplug is unreliable.
 - `sudo reboot` the Pi.
 - On first boot, EmulationStation prompts to **configure a controller** — move the joystick and press the buttons as shown. Do this once or the menus won't respond to your panel. The GPIO daemon presents a virtual pad named `Pi Arcade Controller`.
-- Pick a game and play. Inside MAME, **Coin** inserts a credit and **Start** begins play. Genesis, NES and SNES games start with **Start**; there are no credits.
+- Pick a game and play. Inside MAME, **Coin** inserts a credit and **Start** begins play. Genesis, NES, SNES and GBA games start with **Start**; there are no credits.
 
 ---
 
@@ -94,7 +96,8 @@ pi-arcade/
 │   ├── games.md             # MAME game list, controls, ROM filenames
 │   ├── sega-genesis.md      # Genesis game list, controls, ROM filenames
 │   ├── nes.md               # NES game list and controls
-│   └── snes.md              # SNES game list and controls
+│   ├── snes.md              # SNES game list and controls
+│   └── gba.md               # GBA game list, controls, performance
 ├── scripts/
 │   ├── install.sh           # Runs on the Pi — installs everything
 │   └── deploy.sh            # Runs on your Mac — rsync to Pi
