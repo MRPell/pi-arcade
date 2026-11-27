@@ -5,8 +5,8 @@ EmulationStation starts, and each profile can then start games only inside its
 play hours and while it has time left. It ships dark: nothing changes until the
 `arcade-profiles.enforce` flag is on.
 
-Built so far: sign-in (M-1), hours and time limits (M-2). The admin tools and
-the high-score screen come in later milestones.
+Built so far: sign-in (M-1), hours and time limits (M-2), and the admin on
+the owner's computer (M-3). The high-score screen comes in a later milestone.
 
 ## The flag
 
@@ -22,13 +22,17 @@ the high-score screen come in later milestones.
   profile's hours and time limit. Quitting EmulationStation
   (Start → Quit → Quit EmulationStation) goes back to sign-in for the next player.
 
-Change it on your computer, then `make deploy PI_HOST=pi@retropie.local`. It is read
-each time EmulationStation quits, or at the next boot.
+Turn it on or off from the admin on your computer (below). The cabinet reads it
+each time EmulationStation quits, both ways, so a change takes effect at the
+next quit with no restart: turned on, the next quit goes to sign-in; turned
+off, the next quit brings EmulationStation back with no sign-in, and quitting
+that drops to the console as before. Mid-session nothing changes.
 
 ## Profiles and combos
 
-`config/profiles.json` holds the profiles: Matt (owner), Theo, John and Guest.
-Edit it on your computer and deploy; nothing at the cabinet can change it.
+`config/profiles.json` holds the shipped profiles: Matt (owner), Theo, John and
+Guest. Change them from the admin on your computer (below); nothing at the
+cabinet can change them.
 
 | Profile | Combo (shipped default — change these) |
 |---------|------|
@@ -83,7 +87,10 @@ What the cabinet does:
 - The welcome screen after sign-in says the time left and until when, or why
   play is not allowed now.
 
-Change the limits on your computer and deploy; they apply from the next game.
+Change them from the admin (below). A change applies to the next game, and to
+a game already running within 15 seconds: raised, it plays on; lowered below
+what was already played, it stops with "Time is up" and the time played
+still counts.
 
 ## At the cabinet
 
@@ -98,12 +105,43 @@ pressed together with Coin (the Coin + Start exit chord, Coin hotkeys) is ignore
 
 Who is signed in is kept in `/home/pi/.pi-arcade/session.json`.
 
+## Admin, from the owner's computer
+
+```bash
+make admin PI_HOST=pi@retropie.local      # then open http://127.0.0.1:21010
+```
+
+The admin page shows what the cabinet has and changes it:
+
+- **Profile enforcement**: turn `arcade-profiles.enforce` on or off.
+- **Profiles**: each profile's name, combo (pressed into the page with the
+  cabinet's inputs), play hours (weekdays, weekends, or one day different) and
+  time limit (minutes per day, week or N days, with rollover). Add a player or
+  remove one. **Save to cabinet** checks the change first; a combo that clashes,
+  hours that end before they start, a missing owner or the like is refused with
+  the reason, and the cabinet keeps what it had.
+
+It reaches the cabinet over SSH (the computer needs passwordless SSH to the
+Pi) and runs `python3 -m arcade_profiles.settings` there, which checks the
+change again and writes it to `/home/pi/.pi-arcade/cabinet.json` and
+`profiles.json`. Those win over the shipped `config/` files and are outside the
+repo copy, so `make deploy` never undoes them. The admin listens on
+127.0.0.1 only, so no other device on the network can reach it, and the
+cabinet's controls have no way to change any of this. Deploy this version to
+the Pi first (`make deploy`).
+
+- Combos: the sign-in screen picks up a change while it is showing.
+- Hours and time limits: the next game, and a running game within 15 seconds.
+- The flag: the next time EmulationStation quits.
+
 ## Install
 
 `make deploy-install` hooks `scripts/arcade-session.sh` into
 `/opt/retropie/configs/all/autostart.sh` (the original is saved as
-`autostart.sh.pre-profiles`). With the flag off the script just runs
-`emulationstation`, as the original line did.
+`autostart.sh.pre-profiles`). With the flag off the script runs
+`emulationstation` as the original line did; when it quits, the script checks
+the flag once more and, unless the owner turned it on meanwhile, ends there
+with EmulationStation's exit status, as before.
 
 It also links `scripts/runcommand-onstart.sh` and `runcommand-onend.sh` into
 `/opt/retropie/configs/all/`, which RetroPie's runcommand runs before and after
@@ -117,6 +155,14 @@ and is not a link, the installer leaves it alone and warns.
 `make sim`, then open http://127.0.0.1:21000. It runs the same sign-in and
 play-rules code in front of a stand-in EmulationStation. `make sim-flag-off` uses
 the shipped config (flag off). Keyboard: arrows, 1–6, Shift = Coin, Enter = Start.
+
+`make admin-sim` (in a second terminal, after `make sim`) runs the admin
+against the simulator's cabinet at http://127.0.0.1:21010, through the same
+settings command the Pi runs. The simulator keeps its cabinet's settings in
+`.sim-cabinet/` (`SIM_DIR`); each start of `make sim` resets them from
+`config/` and forgets every play, and a power-cycle keeps them. To run both
+simulators at once, give the second its own `SIM_DIR` and `PORT`, and point
+`make admin-sim` at it with the same `SIM_DIR` and another `ADMIN_PORT`.
 
 The side panel (simulator only) sets the cabinet clock, lets time pass (+1 min,
 +10 min, +1 hour, which also counts toward a running game), turns network time
