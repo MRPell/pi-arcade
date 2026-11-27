@@ -8,6 +8,7 @@ import stat
 import subprocess
 import tempfile
 import shutil
+import time
 import unittest
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -54,6 +55,52 @@ class ArcadeSessionFlagOffTest(unittest.TestCase):
         self.assertEqual(subprocess.call(['python3', '-m', 'arcade_profiles.flag', on], env=env), 0)
         off = os.path.join(REPO, 'config', 'cabinet.json')
         self.assertEqual(subprocess.call(['python3', '-m', 'arcade_profiles.flag', off], env=env), 1)
+
+
+class ArcadeSessionFlagChangeTest(unittest.TestCase):
+    """M-3: the owner turns the flag on or off from their computer and the
+    cabinet follows at the next EmulationStation quit, with no restart."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.state = os.path.join(self.tmp, 'state')
+        os.mkdir(self.state)
+        bindir = os.path.join(self.tmp, 'bin')
+        os.mkdir(bindir)
+        self.calls = os.path.join(self.tmp, 'calls')
+        # Stand-in EmulationStation: records each launch and whether it was
+        # under profiles. On its first run the owner turns the flag on.
+        fake_es = os.path.join(bindir, 'emulationstation')
+        with open(fake_es, 'w') as f:
+            f.write('#!/bin/bash\n'
+                    'echo "es enforced=${ARCADE_PROFILES_ENFORCED:-0}" >> "%s"\n'
+                    'if [[ $(wc -l < "%s") -eq 1 ]]; then\n'
+                    '  echo \'{"arcade-profiles.enforce": true}\' > "%s/cabinet.json"\n'
+                    'fi\n'
+                    'exit 7\n' % (self.calls, self.calls, self.state))
+        os.chmod(fake_es, os.stat(fake_es).st_mode | stat.S_IEXEC)
+        self.env = dict(os.environ, PATH=bindir + os.pathsep + os.environ['PATH'],
+                        PI_ARCADE_DIR=REPO, PI_ARCADE_STATE_DIR=self.state,
+                        PI_ARCADE_CABINET_CONFIG=os.path.join(REPO, 'config', 'cabinet.json'))
+        self.env.pop('ARCADE_PROFILES_ENFORCED', None)
+
+    def test_turned_on_while_running_signs_in_at_the_next_quit_then_off_again(self):
+        proc = subprocess.Popen(['bash', SCRIPT], env=self.env,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Sign-in has no pad here, so it fails and retries every 3 seconds;
+        # the owner then turns the flag off again.
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline and not os.path.exists(os.path.join(self.state, 'cabinet.json')):
+            time.sleep(0.1)
+        time.sleep(1.5)
+        with open(os.path.join(self.state, 'cabinet.json'), 'w') as f:
+            json.dump({'arcade-profiles.enforce': False}, f)
+        out, err = proc.communicate(timeout=20)
+        self.assertEqual(proc.returncode, 7)
+        self.assertIn(b'Sign-in failed; retrying', err)       # sign-in ran after the quit
+        with open(self.calls) as f:
+            self.assertEqual(f.read().splitlines(), ['es enforced=0', 'es enforced=0'])
 
 
 if __name__ == '__main__':
