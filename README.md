@@ -61,6 +61,8 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **PlayStation:** copy `.cue` + `.bin` files to `/home/pi/RetroPie/roms/psx/` and the `scph1001.bin` BIOS to `/home/pi/RetroPie/BIOS/`. See [docs/psx.md](docs/psx.md).
 
+**Arcade profiles:** players can sign in with a button combo before playing. Off by default; see [docs/arcade-profiles.md](docs/arcade-profiles.md).
+
 **Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
 
 ### 6. Connect the TV and first boot
@@ -94,6 +96,8 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 pi-arcade/
 ├── config/
 │   ├── gpio_map.json        # GPIO pin assignments — edit this first
+│   ├── cabinet.json         # cabinet feature flags (arcade-profiles.enforce)
+│   ├── profiles.json        # arcade profiles and their sign-in combos
 │   └── retroarch-autoconfig/  # RetroArch profiles for the virtual pads
 ├── docs/
 │   ├── hardware-setup.md    # Wiring diagrams and physical assembly
@@ -106,7 +110,9 @@ pi-arcade/
 │   ├── install.sh           # Runs on the Pi — installs everything
 │   └── deploy.sh            # Runs on your Mac — rsync to Pi
 ├── src/
-│   └── gpio_daemon.py       # GPIO → virtual gamepad daemon
+│   ├── gpio_daemon.py       # GPIO → virtual gamepad daemon
+│   └── arcade_profiles/     # combo sign-in (docs/arcade-profiles.md)
+├── sim/                     # browser cabinet simulator (make sim)
 ├── systemd/
 │   └── pi-arcade-gpio.service
 └── Makefile
@@ -122,6 +128,9 @@ pi-arcade/
 | `make ssh` | open SSH session to Pi |
 | `make gpio-test` | run GPIO daemon in test/verbose mode |
 | `make logs` | tail GPIO daemon logs |
+| `make test` | run the unit tests locally |
+| `make sim` | cabinet simulator at http://127.0.0.1:21000 (arcade profiles on) |
+| `make sim-flag-off` | the simulator with the shipped flag (off) |
 
 Set `PI_HOST` to override the default (`pi@raspberrypi.local`):
 
