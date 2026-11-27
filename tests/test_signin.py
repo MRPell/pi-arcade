@@ -12,10 +12,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from arcade_profiles.profiles import ProfileError, load_profiles, parse_profiles  # noqa: E402
 from arcade_profiles.signin import SignIn  # noqa: E402
-from arcade_profiles.signin_console import render  # noqa: E402
+from arcade_profiles.console import render  # noqa: E402
 
 REPO = os.path.join(os.path.dirname(__file__), '..')
 PROFILES_PATH = os.path.join(REPO, 'config', 'profiles.json')
+LIMITS = {'hours': {'weekdays': '15:00-20:00'}, 'time': {'minutes': 60, 'per': 'day'}}
 
 
 def tap(signin, *inputs, now=0.0):
@@ -33,7 +34,8 @@ class ProfilesConfigTest(unittest.TestCase):
     def _parse(self, combos):
         roles = ['owner', 'guest'] + ['player'] * (len(combos) - 2)
         return parse_profiles({'profiles': [
-            {'id': 'p%d' % i, 'name': 'P%d' % i, 'role': roles[i], 'combo': c}
+            dict({'id': 'p%d' % i, 'name': 'P%d' % i, 'role': roles[i], 'combo': c},
+                 **({} if roles[i] == 'owner' else {'limits': LIMITS}))
             for i, c in enumerate(combos)
         ]})
 
@@ -57,8 +59,8 @@ class ProfilesConfigTest(unittest.TestCase):
     def test_exactly_one_owner_and_one_guest(self):
         with self.assertRaisesRegex(ProfileError, 'owner'):
             parse_profiles({'profiles': [
-                {'id': 'a', 'name': 'A', 'role': 'player', 'combo': ['1']},
-                {'id': 'g', 'name': 'G', 'role': 'guest', 'combo': ['2']},
+                {'id': 'a', 'name': 'A', 'role': 'player', 'combo': ['1'], 'limits': LIMITS},
+                {'id': 'g', 'name': 'G', 'role': 'guest', 'combo': ['2'], 'limits': LIMITS},
             ]})
 
 

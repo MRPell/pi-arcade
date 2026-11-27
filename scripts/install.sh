@@ -239,6 +239,20 @@ if [[ -f "$AUTOSTART" ]] && ! grep -q 'arcade-session.sh' "$AUTOSTART"; then
   fi
 fi
 
+# Hours and time limits: runcommand runs these before and after every game.
+# They do nothing unless EmulationStation was started by arcade-session.sh
+# with the flag on. Linked, so make deploy updates them.
+for hook in runcommand-onstart.sh runcommand-onend.sh; do
+  hook_dst="/opt/retropie/configs/all/$hook"
+  if [[ -e "$hook_dst" && ! -L "$hook_dst" ]]; then
+    log "WARNING: $hook_dst already exists; hours and time limits not hooked in"
+  else
+    log "Linking $hook for arcade profiles"
+    ln -sfn "$REPO_DIR/scripts/$hook" "$hook_dst"
+    chown -h pi:pi "$hook_dst"
+  fi
+done
+
 # ------------------------------------------------------------------ #
 # 8. Done
 # ------------------------------------------------------------------ #

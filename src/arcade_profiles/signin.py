@@ -16,7 +16,11 @@ class SignIn:
     ENTRY_TIMEOUT = 5.0     # seconds of no input before a half-entered combo is dropped
     MESSAGE_SECONDS = 3.0   # how long "not recognised" stays up
 
-    def __init__(self, profiles, now):
+    def __init__(self, profiles, now, describe=None):
+        # describe(profile) -> extra welcome lines (time left, or why play is
+        # refused), worked out once at sign-in.
+        self._describe = describe or (lambda profile: [])
+        self._status = []
         self._profiles = list(profiles)
         self._entry = []
         self._held = set()
@@ -73,6 +77,7 @@ class SignIn:
         for p in self._profiles:
             if p.combo == entry:
                 self.signed_in = p
+                self._status = list(self._describe(p))
                 self._entry = []
                 self._message = None
                 return
@@ -87,7 +92,8 @@ class SignIn:
             return {
                 'view': 'welcome',
                 'title': 'Signed in: %s' % p.name,
-                'lines': ['%s profile' % ROLE_LABELS[p.role], '', 'Press any button to play'],
+                'lines': ['%s profile' % ROLE_LABELS[p.role]] + self._status
+                         + ['', 'Press any button to play'],
                 'entered': 0,
                 'message': None,
             }

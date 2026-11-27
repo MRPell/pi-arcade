@@ -6,6 +6,10 @@
 # exactly as before. On: show the sign-in screen, then EmulationStation; when
 # EmulationStation quits, the next player signs in. The flag is read again each
 # time round, so turning it off takes effect the next time EmulationStation quits.
+#
+# EmulationStation started here with the flag on gets ARCADE_PROFILES_ENFORCED=1,
+# which the runcommand hooks (runcommand-onstart.sh, -onend.sh) see before each
+# game: hours and time limits apply only to that EmulationStation.
 
 REPO_DIR="${PI_ARCADE_DIR:-/home/pi/pi-arcade}"
 CABINET_CONFIG="${PI_ARCADE_CABINET_CONFIG:-$REPO_DIR/config/cabinet.json}"
@@ -29,7 +33,7 @@ while enforce_on; do
     sleep 3
     enforce_on || break 2
   done
-  emulationstation "$@"
+  ARCADE_PROFILES_ENFORCED=1 emulationstation "$@"
 done
 
 exec emulationstation "$@"
