@@ -1,0 +1,4 @@
+{
+  "_comment": "Dev cabinet flags, used by the simulator (make sim). Not read on the Pi.",
+  "arcade-profiles.enforce": true
+}
