@@ -1,28 +1,62 @@
 """A stand-in for the cabinet's boot flow, for walking arcade profiles without
-the Pi: the real sign-in logic (arcade_profiles.signin) in front of a
-simplified EmulationStation and game.
+the Pi: the real sign-in logic (arcade_profiles.signin) and the real play
+rules (arcade_profiles.play) in front of a simplified EmulationStation and game.
 
-It follows scripts/arcade-session.sh: flag off, boot straight to
-EmulationStation and quitting it drops to the console, as before profiles;
-flag on, sign-in first and quitting EmulationStation returns to sign-in.
+It follows scripts/arcade-session.sh and the runcommand hooks: flag off, boot
+straight to EmulationStation, games start with no checks, and quitting it
+drops to the console, as before profiles. Flag on, sign-in first; starting a
+game is checked against the signed-in profile's hours and time left, a game
+is stopped when its time runs out, and quitting EmulationStation returns to
+sign-in.
 """
 
+import datetime as dt
 import time
+import uuid
 
+from arcade_profiles import play
 from arcade_profiles.session import clear_session, read_session, write_session
 from arcade_profiles.signin import SignIn
+from arcade_profiles.usage import Ledger
 
 GAMES = ['Galaga', 'Pac-Man', 'Donkey Kong', 'Frogger', 'Super Mario Bros.']
 ES_MENU = ['Quit EmulationStation', 'Close menu']
 GAME_LOG = 8
+# A button pressed in the game as it is stopped must not also dismiss the screen.
+DISMISS_GRACE = 1.5
+
+
+class SimClock:
+    """The simulated cabinet's clocks. Time runs at real speed; advance() moves
+    both clocks on (time passing), set_wall() only the wall clock (the clock
+    being set or wrong). synced is whether network time has set the clock."""
+
+    def __init__(self, wall=None, mono_source=time.monotonic):
+        self._source = mono_source
+        self._extra = 0.0
+        self._wall_at_zero = (time.time() if wall is None else wall) - self.mono()
+        self.synced = True
+
+    def mono(self):
+        return self._source() + self._extra
+
+    def wall(self):
+        return self._wall_at_zero + self.mono()
+
+    def advance(self, seconds):
+        self._extra += seconds
+
+    def set_wall(self, wall):
+        self._wall_at_zero = wall - self.mono()
 
 
 class CabinetSim:
-    def __init__(self, profiles, enforce, state_dir, clock=time.monotonic):
+    def __init__(self, profiles, enforce, state_dir, clock=None):
         self.profiles = profiles
         self.enforce = enforce
         self.state_dir = state_dir
-        self.clock = clock
+        self.clock = clock or SimClock()
+        self.boot_id = uuid.uuid4().hex
         self.boot()
 
     def boot(self):
@@ -32,14 +66,28 @@ class CabinetSim:
         self.game = None
         self.game_log = []
         self.held = set()
+        self.notice = None
         if self.enforce:
+            self.ledger = Ledger(self.state_dir, self.clock.wall())
+            self.ledger.recover(self.boot_id)
             self._start_signin()
         else:
             self.view = 'menu'
 
+    def _profile(self):
+        pid = read_session(self.state_dir)['profile']
+        return next(p for p in self.profiles if p.id == pid)
+
+    def _check(self, profile):
+        return play.check(self.profiles, profile, self.clock.wall(), self.ledger, self.clock.synced)
+
     def _start_signin(self):
         clear_session(self.state_dir)
-        self.signin = SignIn(self.profiles, self.clock())
+        wall = self.clock.wall
+
+        def describe(profile):
+            return play.status_lines(self.profiles, self._check(profile), wall())
+        self.signin = SignIn(self.profiles, self.clock.mono(), describe)
         self.view = 'signin'
 
     def feed(self, name, pressed):
@@ -47,23 +95,30 @@ class CabinetSim:
             self.held.add(name)
         else:
             self.held.discard(name)
+        self.tick()
         handler = getattr(self, '_on_' + self.view)
         handler(name, pressed)
 
     def tick(self):
+        mono = self.clock.mono()
         if self.view in ('signin', 'welcome'):
-            self.signin.tick(self.clock())
+            self.signin.tick(mono)
+        elif self.view == 'game' and self.enforce and self.ledger.heartbeat(mono):
+            self.ledger.mark_ended('time')
+            self._end_game()
+        elif self.view in ('refused', 'timeup') and mono >= self.notice['until']:
+            self.view = 'menu'
 
     # -- sign-in (the real logic) ---------------------------------------- #
 
     def _on_signin(self, name, pressed):
-        self.signin.feed(name, pressed, self.clock())
+        self.signin.feed(name, pressed, self.clock.mono())
         if self.signin.signed_in is not None:
-            write_session(self.state_dir, self.signin.signed_in)
+            write_session(self.state_dir, self.signin.signed_in, self.clock.wall())
             self.view = 'welcome'
 
     def _on_welcome(self, name, pressed):
-        self.signin.feed(name, pressed, self.clock())
+        self.signin.feed(name, pressed, self.clock.mono())
         if self.signin.done:
             self.view = 'menu'
 
@@ -76,12 +131,49 @@ class CabinetSim:
             step = -1 if name == 'up' else 1
             self.cursor = (self.cursor + step) % len(GAMES)
         elif name == '1':
-            self.game = GAMES[self.cursor]
-            self.game_log = []
-            self.view = 'game'
+            self._launch(GAMES[self.cursor])
         elif name == 'start':
             self.menu_cursor = 0
             self.view = 'esmenu'
+
+    def _launch(self, title):
+        """What runcommand-onstart.sh does on the cabinet, then the game."""
+        if self.enforce:
+            profile = self._profile()
+            wall = self.clock.wall()
+            self.ledger.recover(self.boot_id)
+            decision = self._check(profile)
+            if not decision.allowed:
+                self._notice(play.refusal_screen(self.profiles, decision, wall))
+                return
+            self.ledger.start(profile.id, wall, self.clock.mono(),
+                              play.play_seconds(decision, wall), self.boot_id)
+        self.game = title
+        self.game_log = []
+        self.view = 'game'
+
+    def _end_game(self):
+        """What runcommand-onend.sh does on the cabinet."""
+        self.game = None
+        self.view = 'menu'
+        if not self.enforce:
+            return
+        ended = self.ledger.finish(self.clock.mono())
+        if ended and ended['ended'] == 'time':
+            profile = next(p for p in self.profiles if p.id == ended['profile'])
+            self._notice(play.timeup_screen(self.profiles, profile, self.ledger,
+                                            self.clock.wall(), self.clock.synced))
+
+    def _notice(self, screen):
+        now = self.clock.mono()
+        self.notice = dict(screen, shown=now, until=now + play.DISMISS_SECONDS)
+        self.view = screen['view']
+
+    def _on_refused(self, name, pressed):
+        if pressed and self.clock.mono() - self.notice['shown'] >= DISMISS_GRACE:
+            self.view = 'menu'
+
+    _on_timeup = _on_refused
 
     def _on_esmenu(self, name, pressed):
         if not pressed:
@@ -99,8 +191,7 @@ class CabinetSim:
 
     def _on_game(self, name, pressed):
         if {'coin', 'start'} <= self.held:
-            self.game = None
-            self.view = 'menu'
+            self._end_game()
             return
         if pressed:
             self.game_log = (self.game_log + [name])[-GAME_LOG:]
@@ -112,13 +203,21 @@ class CabinetSim:
 
     def state(self):
         self.tick()
+        wall = self.clock.wall()
+        now = dt.datetime.fromtimestamp(wall)
         state = {
             'view': self.view,
             'enforce': self.enforce,
             'session': read_session(self.state_dir),
+            'clock': {'wall': now.strftime('%Y-%m-%dT%H:%M'),
+                      'text': '%s, %s' % (now.strftime('%a %d %b %Y'), play.clock_time(now)),
+                      'synced': self.clock.synced},
+            'usage': play.usage_summary(self.profiles, self.ledger, wall) if self.enforce else None,
         }
         if self.view in ('signin', 'welcome'):
             state['screen'] = self.signin.screen()
+        elif self.view in ('refused', 'timeup'):
+            state['screen'] = {k: self.notice[k] for k in ('view', 'title', 'lines')}
         elif self.view == 'menu':
             state['menu'] = {'games': GAMES, 'cursor': self.cursor}
         elif self.view == 'esmenu':
