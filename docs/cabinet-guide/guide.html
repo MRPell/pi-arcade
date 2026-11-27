@@ -25,7 +25,7 @@
   /* System tags */
   .t { display: inline-block; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 7.5pt; letter-spacing: 0.4px; padding: 0.5px 4px; border-radius: 3px; color: #fff; vertical-align: 1px; }
   .ARC { background: #d62f2f; } .NES { background: #4a4a57; } .SNES { background: #6b3fa0; }
-  .GEN { background: #1f5fbf; } .GBA { background: #0f8a7e; }
+  .GEN { background: #1f5fbf; } .GBA { background: #0f8a7e; } .PS1 { background: #2f4f6f; } .PC { background: #b07a12; }
   .s, .p { display: inline-block; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 7.5pt; padding: 0 3px; border-radius: 3px; border: 1px solid #9a9aa8; color: #3d3d4a; vertical-align: 1px; }
 
   /* Category cards */
@@ -49,6 +49,7 @@
   .plat   { --c: #1f8a3a; }
   .hard   { --c: #111; }
   .long   { --c: #1f5fbf; }
+  .turns  { --c: #7a4bd6; }
 
   .newbie { break-inside: avoid; border-radius: 8px; background: #fff4d6; border: 2px solid #e0b100; padding: 7px 10px; font-size: 10.5pt; line-height: 1.35; }
   .newbie b { font-family: "Avenir Next Condensed", sans-serif; font-size: 11pt; text-transform: uppercase; display: block; }
@@ -93,13 +94,15 @@
 <!-- ======================= PAGE 1: WHAT TO PLAY ======================= -->
 <section class="page">
   <header>
-    <h1><small>Pi Arcade &middot; 104 games</small>What should I play?</h1>
+    <h1><small>Pi Arcade &middot; 114 games</small>What should I play?</h1>
     <div class="legend">
       <span><b class="t ARC">ARC</b> Arcade</span>
       <span><b class="t NES">NES</b> Nintendo</span>
       <span><b class="t SNES">SNES</b> Super Nintendo</span>
       <span><b class="t GEN">GEN</b> Sega Genesis</span>
       <span><b class="t GBA">GBA</b> Game Boy Advance</span>
+      <span><b class="t PS1">PS1</b> PlayStation</span>
+      <span><b class="t PC">PC</b> Ports menu</span>
       <span>&#9733; start here</span>
       <span><b class="s">S</b> saves progress</span>
       <span><b class="p">P</b> password &mdash; write it down</span>
@@ -127,6 +130,7 @@
         <li>Joust <span class="tags"><b class="t ARC">ARC</b></span></li>
         <li>Mario Bros. <span class="tags"><b class="t ARC">ARC</b></span></li>
         <li>Arkanoid <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li>LBreakout2 <span class="tags"><b class="t PC">PC</b></span></li>
         <li>1942 <span class="tags"><b class="t ARC">ARC</b></span></li>
         <li>Tetris <span class="tags"><b class="t NES">NES</b></span></li>
         <li>Dr. Mario <span class="tags"><b class="t NES">NES</b></span></li>
@@ -145,6 +149,7 @@
         <li>Mario Kart: Super Circuit <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
         <li>F-Zero <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
         <li>Star Fox <span class="tags"><b class="t SNES">SNES</b></span></li>
+        <li>Tony Hawk's Pro Skater 2 <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
         <li>NBA Jam <span class="tags"><b class="t SNES">SNES</b></span></li>
         <li>Tecmo Bowl <span class="tags"><b class="t ARC">ARC</b> <b class="t NES">NES</b></span></li>
         <li>Ice Hockey <span class="tags"><b class="t NES">NES</b></span></li>
@@ -161,6 +166,8 @@
       <div class="why">Learn one character's moves and climb the ladder. Uses all six buttons.</div>
       <ul>
         <li class="star">Street Fighter II <span class="tags"><b class="t ARC">ARC</b></span></li>
+        <li class="star">Tekken 3 <span class="tags"><b class="t PS1">PS1</b></span></li>
+        <li>Street Fighter EX Plus Alpha <span class="tags"><b class="t PS1">PS1</b></span></li>
         <li>Street Fighter II Turbo <span class="tags"><b class="t SNES">SNES</b></span></li>
         <li>SF II' Special Champion Ed. <span class="tags"><b class="t GEN">GEN</b></span></li>
         <li>Mortal Kombat II <span class="tags"><b class="t SNES">SNES</b> <b class="t GEN">GEN</b></span></li>
@@ -206,6 +213,9 @@
         <li>Sonic the Hedgehog 3 <span class="tags"><b class="t GEN">GEN</b> <b class="s">S</b></span></li>
         <li>Sonic &amp; Knuckles <span class="tags"><b class="t GEN">GEN</b></span></li>
         <li>Sonic 3D Blast <span class="tags"><b class="t GEN">GEN</b></span></li>
+        <li>Crash Bandicoot <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
+        <li>Crash Bandicoot 2 <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
+        <li>Spyro the Dragon <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
         <li>Kirby's Adventure <span class="tags"><b class="t NES">NES</b> <b class="s">S</b></span></li>
         <li>Wario Land 4 <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
         <li>DuckTales <span class="tags"><b class="t NES">NES</b></span></li>
@@ -227,12 +237,22 @@
         <li class="star">Mega Man X <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
         <li>Mega Man 3 <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
         <li>Mega Man X2 <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
+        <li>Mega Man X4 <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
         <li>Castlevania <span class="tags"><b class="t NES">NES</b></span></li>
         <li>Castlevania III <span class="tags"><b class="t NES">NES</b> <b class="p">P</b></span></li>
         <li>Super Castlevania IV <span class="tags"><b class="t SNES">SNES</b> <b class="p">P</b></span></li>
         <li>Ninja Gaiden <span class="tags"><b class="t NES">NES</b></span></li>
         <li>Ninja Gaiden II <span class="tags"><b class="t NES">NES</b></span></li>
         <li>Blaster Master <span class="tags"><b class="t NES">NES</b></span></li>
+      </ul>
+    </div>
+
+    <div class="cat turns">
+      <h2>Pass the Controls <em>2&ndash;4 PLAYERS</em></h2>
+      <div class="why">Turn-based, so everyone shares the one stick. When your turn ends, hand it over. Each player picks a team at the start.</div>
+      <ul>
+        <li class="star">Worms Armageddon <span class="tags"><b class="t PS1">PS1</b></span></li>
+        <li>Any 2-player arcade game <span class="tags"><b class="t ARC">ARC</b></span></li>
       </ul>
     </div>
 
@@ -244,6 +264,7 @@
         <li class="star">Pok&eacute;mon Emerald <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
         <li class="star">Chrono Trigger <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
         <li>Pok&eacute;mon FireRed / LeafGreen <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
+        <li>Castlevania: Symphony of the Night <span class="tags"><b class="t PS1">PS1</b> <b class="s">S</b></span></li>
         <li>Super Metroid <span class="tags"><b class="t SNES">SNES</b> <b class="s">S</b></span></li>
         <li>Metroid: Zero Mission <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
         <li>Zelda: The Minish Cap <span class="tags"><b class="t GBA">GBA</b> <b class="s">S</b></span></li>
@@ -287,17 +308,17 @@
         </div>
       </div>
       <div class="front"><span>front of the cabinet:</span><div class="pill">COIN</div><div class="pill">START</div></div>
-      <div class="note">Super Nintendo, NES and Game Boy Advance games use the buttons as labelled. Arcade and Genesis games:</div>
+      <div class="note">Super Nintendo, NES and Game Boy Advance games use the buttons as labelled. Arcade, Genesis and PlayStation games:</div>
       <table>
-        <tr><th>Button</th><th><b class="t ARC">ARC</b></th><th><b class="t GEN">GEN</b></th></tr>
-        <tr><td>Y</td><td>Fire / main action</td><td>A</td></tr>
-        <tr><td>X</td><td>2nd action</td><td>Y</td></tr>
-        <tr><td>L</td><td>extra (fighters)</td><td>X</td></tr>
-        <tr><td>B</td><td>extra (fighters)</td><td>B</td></tr>
-        <tr><td>A</td><td>extra (fighters)</td><td>C</td></tr>
-        <tr><td>R</td><td>extra (fighters)</td><td>Z</td></tr>
-        <tr><td>Coin</td><td>Insert coin</td><td>Mode</td></tr>
-        <tr><td>Start</td><td>1-player Start</td><td>Start</td></tr>
+        <tr><th>Button</th><th><b class="t ARC">ARC</b></th><th><b class="t GEN">GEN</b></th><th><b class="t PS1">PS1</b></th></tr>
+        <tr><td>Y</td><td>Fire / main action</td><td>A</td><td>Square</td></tr>
+        <tr><td>X</td><td>2nd action</td><td>Y</td><td>Triangle</td></tr>
+        <tr><td>L</td><td>extra (fighters)</td><td>X</td><td>L1</td></tr>
+        <tr><td>B</td><td>extra (fighters)</td><td>B</td><td>Cross</td></tr>
+        <tr><td>A</td><td>extra (fighters)</td><td>C</td><td>Circle</td></tr>
+        <tr><td>R</td><td>extra (fighters)</td><td>Z</td><td>R1</td></tr>
+        <tr><td>Coin</td><td>Insert coin</td><td>Mode</td><td>Select</td></tr>
+        <tr><td>Start</td><td>1-player Start</td><td>Start</td><td>Start</td></tr>
       </table>
       <div class="note" style="margin:5px 0 0">Coin is Select on Nintendo systems. NES games use only <b>B</b> and <b>A</b>. Most Genesis games use Y, B and A.</div>
     </div>

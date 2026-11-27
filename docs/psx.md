@@ -46,6 +46,7 @@ The cabinet's RetroArch profile maps the panel onto the RetroPad, and PCSX ReARM
 | Castlevania: Symphony of the Night | Action exploration | Two tracks (data + audio) |
 | Crash Bandicoot | Platformer | Cross jump, Square spin |
 | Crash Bandicoot 2: Cortex Strikes Back | Platformer | Cross jump, Square spin, Circle crouch/slide |
+| Worms Armageddon | Strategy (turn-based) | 2–4 players share the panel: pass the controls when your turn ends |
 | Mega Man X4 | Action platformer | Cross jump, Square shoot (hold to charge), Circle dash. L1/R1 switch weapons |
 | Spyro the Dragon | Platformer | Cross jump/glide, Square charge, Circle flame. L1/R1 turn the camera (L2/R2 aren't needed) |
 | Street Fighter EX Plus Alpha | Fighting | 3D Street Fighter. Six attacks need six buttons: if Heavy Kick defaults to R2, remap it to L1 in the game's Config menu |
