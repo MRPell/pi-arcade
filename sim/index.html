@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi Arcade simulator</title>
+<style>
+  :root {
+    --bezel: #17161c; --bezel-edge: #2a2833; --screen: #05070a; --phosphor: #d7f5e3;
+    --dim: #7c9488; --warn: #ffb454; --accent: #ff5d73; --panel: #24222c; --text: #e8e6ef;
+    --muted: #9a97a8; --btn: #3b82f6; --coin: #eab308; --start: #22c55e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0e0d12; color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px;
+          display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr) 300px; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: .04em; margin: 0 0 12px; color: var(--muted); }
+
+  .cabinet { background: var(--bezel); border: 1px solid var(--bezel-edge); border-radius: 18px; padding: 18px; }
+  .screen { background: var(--screen); border-radius: 10px; aspect-ratio: 4 / 3; padding: 6%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            color: var(--phosphor); font-family: "Menlo", "DejaVu Sans Mono", ui-monospace, monospace;
+            font-size: clamp(13px, 2.3vw, 20px); box-shadow: inset 0 0 60px rgba(120, 255, 190, .06); }
+  .screen .title { font-size: 1.6em; font-weight: 700; margin-bottom: .8em; }
+  .screen .dots { font-size: 1.5em; letter-spacing: .3em; min-height: 1.5em; }
+  .screen .msg { color: var(--warn); min-height: 1.45em; margin-bottom: .6em; }
+  .screen .line { color: var(--dim); min-height: 1.45em; }
+  .screen .line.strong { color: var(--phosphor); }
+  .screen.es { align-items: stretch; text-align: left; justify-content: flex-start;
+               font-family: system-ui, sans-serif; background: #101827; color: #e5e7eb; }
+  .es .bar { font-size: .8em; color: #93a3b8; margin-bottom: 1em; display: flex; justify-content: space-between; }
+  .es ul { list-style: none; margin: 0; padding: 0; }
+  .es li { padding: .35em .6em; border-radius: 4px; }
+  .es li.on { background: #2563eb; color: #fff; }
+  .es .hint { margin-top: auto; font-size: .75em; color: #93a3b8; }
+  .screen.game { background: #000; }
+  .screen.shell { align-items: flex-start; justify-content: flex-end; text-align: left; color: #c9d1d9; }
+
+  .panel { margin-top: 18px; background: var(--panel); border-radius: 12px; padding: 18px;
+           display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: center; }
+  .stick { display: grid; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(3, 48px); gap: 4px; }
+  .stick .ball { grid-area: 2 / 2; border-radius: 50%; background: #b91c1c; }
+  button.ctl { border: 0; color: #fff; font: 600 12px system-ui, sans-serif; cursor: pointer;
+               touch-action: none; user-select: none; }
+  button.ctl:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  button.ctl.down { filter: brightness(1.5); transform: translateY(1px); }
+  .stick button { background: #44414f; border-radius: 8px; }
+  .buttons { display: grid; grid-template-columns: repeat(3, 56px); gap: 12px; }
+  .buttons button { width: 56px; height: 56px; border-radius: 50%; background: var(--btn); }
+  .sys { display: flex; flex-direction: column; gap: 10px; }
+  .sys button { width: 76px; height: 34px; border-radius: 17px; }
+  .sys .coin { background: var(--coin); color: #1c1917; }
+  .sys .start { background: var(--start); color: #052e16; }
+
+  aside { background: #17161c; border: 1px dashed #3a3845; border-radius: 12px; padding: 16px; align-self: start; }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; }
+  aside dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 16px; }
+  aside dt { color: var(--muted); }
+  aside dd { margin: 0; font-family: ui-monospace, monospace; word-break: break-all; }
+  aside table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+  aside td { padding: 2px 0; }
+  aside td:first-child { color: var(--muted); padding-right: 10px; }
+  aside kbd { font: 12px ui-monospace, monospace; background: #2a2833; border-radius: 4px; padding: 1px 5px; }
+  aside button.reboot { background: #2a2833; color: var(--text); border: 1px solid #3a3845; border-radius: 6px;
+                        padding: 6px 12px; cursor: pointer; font: inherit; }
+  aside p { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main>
+    <h1>Pi Arcade simulator</h1>
+    <div class="cabinet">
+      <div id="screen" class="screen" role="region" aria-label="Cabinet screen" aria-live="polite"></div>
+      <div class="panel" aria-label="Control panel">
+        <div class="stick" aria-label="Joystick">
+          <button class="ctl" data-input="up" style="grid-area:1/2" aria-label="Joystick up">&#9650;</button>
+          <button class="ctl" data-input="left" style="grid-area:2/1" aria-label="Joystick left">&#9664;</button>
+          <span class="ball" aria-hidden="true"></span>
+          <button class="ctl" data-input="right" style="grid-area:2/3" aria-label="Joystick right">&#9654;</button>
+          <button class="ctl" data-input="down" style="grid-area:3/2" aria-label="Joystick down">&#9660;</button>
+        </div>
+        <div class="buttons" aria-label="Action buttons">
+          <button class="ctl" data-input="1" aria-label="Button 1">1</button>
+          <button class="ctl" data-input="2" aria-label="Button 2">2</button>
+          <button class="ctl" data-input="3" aria-label="Button 3">3</button>
+          <button class="ctl" data-input="4" aria-label="Button 4">4</button>
+          <button class="ctl" data-input="5" aria-label="Button 5">5</button>
+          <button class="ctl" data-input="6" aria-label="Button 6">6</button>
+        </div>
+        <div class="sys">
+          <button class="ctl coin" data-input="coin" aria-label="Coin">COIN</button>
+          <button class="ctl start" data-input="start" aria-label="Start">START</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <aside aria-label="Simulator only">
+    <h2>Simulator only</h2>
+    <p>Not part of the cabinet: what the Pi would have on disk.</p>
+    <dl>
+      <dt>arcade-profiles.enforce</dt><dd id="flag">?</dd>
+      <dt>session.json</dt><dd id="session">?</dd>
+    </dl>
+    <h2>Keyboard</h2>
+    <table>
+      <tr><td>Joystick</td><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd></td></tr>
+      <tr><td>Buttons 1&ndash;6</td><td><kbd>1</kbd> &hellip; <kbd>6</kbd></td></tr>
+      <tr><td>Coin</td><td><kbd>Shift</kbd></td></tr>
+      <tr><td>Start</td><td><kbd>Enter</kbd></td></tr>
+      <tr><td>Coin + Start</td><td>hold <kbd>Shift</kbd>, press <kbd>Enter</kbd></td></tr>
+    </table>
+    <button class="reboot" id="reboot" type="button">Power-cycle cabinet</button>
+  </aside>
+</div>
+<script>
+(function () {
+  var screenEl = document.getElementById('screen');
+  var KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+               Digit1: '1', Digit2: '2', Digit3: '3', Digit4: '4', Digit5: '5', Digit6: '6',
+               Numpad1: '1', Numpad2: '2', Numpad3: '3', Numpad4: '4', Numpad5: '5', Numpad6: '6',
+               ShiftLeft: 'coin', ShiftRight: 'coin', Enter: 'start', NumpadEnter: 'start' };
+  var held = {};
+  var queue = Promise.resolve();
+
+  function post(path, body) {
+    return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(body || {}) }).then(function (r) { return r.json(); });
+  }
+  // Inputs are sent one at a time, in order, so a quick press/release never arrives reversed.
+  function send(input, pressed) {
+    if (!!held[input] === pressed) return;
+    held[input] = pressed;
+    document.querySelectorAll('[data-input="' + input + '"]').forEach(function (b) {
+      b.classList.toggle('down', pressed);
+    });
+    queue = queue.then(function () { return post('/api/input', { input: input, pressed: pressed }); })
+                 .then(render, function () {});
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function render(s) {
+    screenEl.className = 'screen';
+    screenEl.replaceChildren();
+    screenEl.dataset.view = s.view;
+    if (s.view === 'signin' || s.view === 'welcome') {
+      var sc = s.screen;
+      screenEl.append(el('div', 'title', sc.title));
+      if (s.view === 'signin') {
+        screenEl.append(el('div', 'dots', sc.entered ? new Array(sc.entered + 1).join('* ').trim() : '-'));
+        screenEl.append(el('div', 'msg', sc.message || ''));
+      }
+      sc.lines.forEach(function (line, i) {
+        screenEl.append(el('div', 'line' + (s.view === 'welcome' && i === 0 ? ' strong' : ''), line));
+      });
+    } else if (s.view === 'menu' || s.view === 'esmenu') {
+      screenEl.classList.add('es');
+      var bar = el('div', 'bar');
+      bar.append(el('span', null, 'EmulationStation (simulated)'), el('span', null, 'Arcade'));
+      screenEl.append(bar);
+      var list = s.view === 'menu' ? s.menu.games : s.esmenu.items;
+      var cur = s.view === 'menu' ? s.menu.cursor : s.esmenu.cursor;
+      if (s.view === 'esmenu') screenEl.append(el('div', 'bar', 'Main menu'));
+      var ul = el('ul');
+      list.forEach(function (name, i) { ul.append(el('li', i === cur ? 'on' : '', name)); });
+      screenEl.append(ul);
+      screenEl.append(el('div', 'hint', s.view === 'menu'
+        ? 'Joystick: choose   Button 1: play   Start: menu'
+        : 'Joystick: choose   Button 1: select   Button 2: back'));
+    } else if (s.view === 'game') {
+      screenEl.classList.add('game');
+      screenEl.append(el('div', 'title', s.game.title));
+      screenEl.append(el('div', 'line', 'Game running. Coin + Start exits.'));
+      screenEl.append(el('div', 'line', 'Game received: ' + (s.game.log.join(' ') || '-')));
+    } else if (s.view === 'shell') {
+      screenEl.classList.add('shell');
+      screenEl.append(el('div', null, 'EmulationStation exited.'));
+      screenEl.append(el('div', null, 'pi@retropie:~ $ _'));
+    }
+    document.getElementById('flag').textContent = s.enforce ? 'on' : 'off';
+    document.getElementById('session').textContent = s.session ? JSON.stringify(s.session) : 'none';
+  }
+
+  document.querySelectorAll('button.ctl').forEach(function (b) {
+    var input = b.dataset.input;
+    b.addEventListener('pointerdown', function (ev) { b.setPointerCapture(ev.pointerId); send(input, true); });
+    b.addEventListener('pointerup', function () { send(input, false); });
+    b.addEventListener('pointercancel', function () { send(input, false); });
+    // Keyboard activation of a focused control (Space) is one tap.
+    b.addEventListener('click', function (ev) {
+      if (ev.detail === 0) { send(input, true); send(input, false); }
+    });
+  });
+  window.addEventListener('keydown', function (ev) {
+    var input = KEYS[ev.code];
+    if (!input) return;
+    ev.preventDefault();
+    if (!ev.repeat) send(input, true);
+  });
+  window.addEventListener('keyup', function (ev) {
+    var input = KEYS[ev.code];
+    if (!input) return;
+    ev.preventDefault();
+    send(input, false);
+  });
+  window.addEventListener('blur', function () {
+    Object.keys(held).forEach(function (k) { if (held[k]) send(k, false); });
+  });
+  document.getElementById('reboot').addEventListener('click', function () {
+    queue = queue.then(function () { return post('/api/boot'); }).then(render);
+  });
+
+  function poll() {
+    queue = queue.then(function () { return fetch('/api/state').then(function (r) { return r.json(); }); })
+                 .then(render, function () {});
+    setTimeout(poll, 300);
+  }
+  poll();
+})();
+</script>
+</body>
+</html>
