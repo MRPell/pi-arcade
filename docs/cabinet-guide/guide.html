@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Printable cabinet guide (2 letter pages). Regenerate the PDF after editing:
+  Printable cabinet guide (3 letter pages). Regenerate the PDF after editing:
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --no-pdf-header-footer \
     --print-to-pdf=docs/cabinet-guide/cabinet-guide.pdf docs/cabinet-guide/guide.html
 -->
@@ -87,6 +87,15 @@
   .line { display: grid; grid-template-columns: 14px 1fr 0.9fr; gap: 4px; align-items: end; height: 48px; font-size: 11pt; font-weight: 700; color: #d62f2f; }
   .line div { border-bottom: 1px solid #9a9aa8; height: 100%; }
   .cap { display: grid; grid-template-columns: 14px 1fr 0.9fr; gap: 4px; font-size: 6.5pt; color: #8a8a99; text-transform: uppercase; letter-spacing: 0.4px; }
+  /* Page 3 */
+  .moves { column-count: 3; column-gap: 0.18in; flex: 1; }
+  .sys { break-inside: avoid; margin: 0 0 0.16in; }
+  .sys h3 { margin: 0 0 4px; font-family: "Avenir Next Condensed", sans-serif; font-weight: 800; font-size: 15pt; text-transform: uppercase; border-bottom: 2px solid #16161d; padding-bottom: 2px; }
+  .sysnote { font-size: 9pt; color: #5b5b6b; margin: 0 0 3px; }
+  .mv { break-inside: avoid; padding: 3.5px 0; border-bottom: 1px dashed #d4d4dc; line-height: 1.3; }
+  .mv b { display: block; font-family: "Avenir Next Condensed", sans-serif; font-size: 12pt; }
+  .mv span { font-size: 9.5pt; color: #2e2e38; }
+  .mv i, .sysnote i { font-style: normal; font-family: "Avenir Next Condensed", sans-serif; font-weight: 700; font-size: 9pt; border: 1.2px solid #16161d; border-radius: 4px; padding: 0 3px; background: #f2f2f6; }
 </style>
 </head>
 <body>
@@ -284,7 +293,7 @@
 
   <footer>
     <span>Saves only stick if you quit with <b>Coin + Start</b>. Never just switch the cabinet off.</span>
-    <span>Controls &amp; high-score board on the back &rarr;</span>
+    <span>Controls, high scores &amp; game moves on the next pages &rarr;</span>
   </footer>
 </section>
 
@@ -364,6 +373,86 @@
       <div class="card"><h4>Your pick <span>________</span></h4><div class="cap"><span></span><span>Name</span><span>Score</span></div><div class="line">1<div></div><div></div></div><div class="line">2<div></div><div></div></div><div class="line">3<div></div><div></div></div><div class="line">4<div></div><div></div></div></div>
     </div>
   </div>
+</section>
+
+<!-- ======================= PAGE 3: GAME MOVES ======================= -->
+<section class="page">
+  <header>
+    <h1><small>Pi Arcade</small>Game moves</h1>
+    <div class="legend" style="font-size:10pt; max-width:4.4in; text-align:right; display:block">
+      Every move uses the <b>panel buttons</b>, already translated from the console's own buttons.
+    </div>
+  </header>
+  <div class="moves">
+    <div class="sys"><h3><b class="t ARC">ARC</b> Arcade</h3>
+      <div class="mv"><b>Donkey Kong</b><span><i>Y</i> jump</span></div>
+      <div class="mv"><b>Galaga &middot; Space Invaders &middot; Centipede</b><span><i>Y</i> fire</span></div>
+      <div class="mv"><b>Dig Dug</b><span><i>Y</i> pump (tap to inflate)</span></div>
+      <div class="mv"><b>Joust</b><span>Tap <i>Y</i> to flap</span></div>
+      <div class="mv"><b>1942</b><span><i>Y</i> fire &middot; <i>X</i> loop to dodge (3 per life)</span></div>
+      <div class="mv"><b>Metal Slug (all)</b><span><i>Y</i> shoot &middot; <i>X</i> jump &middot; <i>L</i> grenade</span></div>
+      <div class="mv"><b>TMNT</b><span><i>Y</i> attack &middot; <i>X</i> jump</span></div>
+      <div class="mv"><b>Street Fighter II</b><span>Punches <i>Y</i><i>X</i><i>L</i> &middot; kicks <i>B</i><i>A</i><i>R</i> (light &rarr; heavy)</span></div>
+    </div>
+    <div class="sys"><h3><b class="t NES">NES</b> NES</h3>
+      <div class="sysnote">Only <i>B</i> and <i>A</i> are used.</div>
+      <div class="mv"><b>Super Mario Bros. 1 &middot; 3</b><span><i>B</i> run / fireball &middot; <i>A</i> jump</span></div>
+      <div class="mv"><b>Contra &middot; Super C</b><span><i>B</i> fire &middot; <i>A</i> jump. Title screen: &uarr;&uarr;&darr;&darr;&larr;&rarr;&larr;&rarr; <i>B</i><i>A</i> <i>Start</i> = 30 lives</span></div>
+      <div class="mv"><b>Mega Man 2 &middot; 3</b><span><i>B</i> fire &middot; <i>A</i> jump &middot; <i>Start</i> weapons. MM3: &darr; + <i>A</i> slide</span></div>
+      <div class="mv"><b>Castlevania &middot; Ninja Gaiden</b><span><i>B</i> attack &middot; &uarr; + <i>B</i> sub-weapon &middot; <i>A</i> jump</span></div>
+      <div class="mv"><b>Mike Tyson's Punch-Out!!</b><span><i>B</i> left / <i>A</i> right &middot; &uarr; + punch = head &middot; <i>Start</i> star uppercut</span></div>
+      <div class="mv"><b>Excitebike</b><span><i>A</i> gas &middot; <i>B</i> turbo (watch the heat) &middot; &larr;&rarr; tilt in the air</span></div>
+      <div class="mv"><b>Zelda II</b><span><i>B</i> sword &middot; <i>A</i> jump</span></div>
+      <div class="mv"><b>DuckTales</b><span><i>B</i> action &middot; <i>A</i> jump &middot; &darr; + <i>B</i> in the air = pogo</span></div>
+      <div class="mv"><b>Blaster Master</b><span><i>B</i> fire &middot; <i>A</i> jump &middot; <i>Coin</i> in / out of the tank</span></div>
+      <div class="mv"><b>Tetris &middot; Dr. Mario</b><span><i>B</i> / <i>A</i> rotate &middot; &darr; drop</span></div>
+    </div>
+    <div class="sys"><h3><b class="t SNES">SNES</b> Super Nintendo</h3>
+      <div class="mv"><b>Super Mario World</b><span><i>Y</i> run &middot; <i>B</i> jump &middot; <i>A</i> spin jump</span></div>
+      <div class="mv"><b>Super Mario Kart</b><span><i>B</i> gas &middot; <i>Y</i> brake &middot; <i>L</i>/<i>R</i> hop &amp; drift &middot; <i>A</i> item</span></div>
+      <div class="mv"><b>Zelda: A Link to the Past</b><span><i>B</i> sword &middot; <i>Y</i> item &middot; <i>A</i> action / dash</span></div>
+      <div class="mv"><b>Mega Man X &middot; X2</b><span><i>Y</i> fire (hold to charge) &middot; <i>B</i> jump &middot; <i>A</i> dash</span></div>
+      <div class="mv"><b>Super Metroid</b><span><i>Y</i> fire &middot; <i>B</i> jump &middot; <i>L</i>/<i>R</i> aim diagonally</span></div>
+      <div class="mv"><b>Contra III</b><span><i>Y</i> fire &middot; <i>B</i> jump &middot; <i>X</i> bomb &middot; <i>L</i>/<i>R</i> weapon &middot; <i>L</i>+<i>R</i> spin-fire</span></div>
+      <div class="mv"><b>Donkey Kong Country 1 &middot; 2</b><span><i>Y</i> roll / run &middot; <i>B</i> jump &middot; <i>A</i> swap Kongs</span></div>
+      <div class="mv"><b>TMNT IV: Turtles in Time</b><span><i>Y</i> attack &middot; <i>B</i> jump</span></div>
+      <div class="mv"><b>Street Fighter II Turbo</b><span>Punches <i>Y</i><i>X</i><i>L</i> &middot; kicks <i>B</i><i>A</i><i>R</i></span></div>
+      <div class="mv"><b>Super Punch-Out!!</b><span><i>Y</i> / <i>B</i> left &amp; right &middot; &uarr; + punch = head</span></div>
+    </div>
+    <div class="sys"><h3><b class="t GEN">GEN</b> Sega Genesis</h3>
+      <div class="mv"><b>Sonic 1 &middot; 2 &middot; 3 &middot; &amp; Knuckles</b><span><i>Y</i>, <i>B</i> or <i>A</i> jump &middot; Sonic 2+: hold &darr;, tap jump = spin dash</span></div>
+      <div class="mv"><b>Streets of Rage 2</b><span><i>B</i> attack &middot; <i>A</i> jump &middot; <i>Y</i> special</span></div>
+      <div class="mv"><b>Golden Axe</b><span><i>B</i> attack &middot; <i>A</i> jump &middot; <i>Y</i> magic</span></div>
+      <div class="mv"><b>SF II' Special Champion Ed.</b><span>Punches <i>L</i><i>X</i><i>R</i> &middot; kicks <i>Y</i><i>B</i><i>A</i></span></div>
+    </div>
+    <div class="sys"><h3><b class="t GBA">GBA</b> Game Boy Advance</h3>
+      <div class="sysnote">Uses <i>B</i>, <i>A</i>, <i>L</i> and <i>R</i> as labelled.</div>
+      <div class="mv"><b>Zelda: The Minish Cap</b><span><i>B</i> / <i>A</i> equipped items &middot; <i>R</i> roll / pick up &middot; <i>L</i> talk to Ezlo</span></div>
+      <div class="mv"><b>Metroid: Zero Mission</b><span><i>B</i> fire &middot; <i>A</i> jump &middot; <i>R</i> aim diagonally</span></div>
+      <div class="mv"><b>Mario &amp; Luigi</b><span><i>A</i> Mario &middot; <i>B</i> Luigi</span></div>
+      <div class="mv"><b>Mario Kart: Super Circuit</b><span><i>A</i> gas &middot; <i>B</i> brake &middot; <i>R</i> hop &amp; drift &middot; <i>L</i> item</span></div>
+      <div class="mv"><b>Super Mario Advance 4</b><span><i>B</i> run / fireball &middot; <i>A</i> jump</span></div>
+      <div class="mv"><b>Wario Land 4</b><span><i>A</i> jump &middot; <i>B</i> attack</span></div>
+    </div>
+    <div class="sys"><h3><b class="t PS1">PS1</b> PlayStation</h3>
+      <div class="sysnote"><i>Y</i> Square &middot; <i>X</i> Triangle &middot; <i>B</i> Cross &middot; <i>A</i> Circle &middot; <i>L</i> L1 &middot; <i>R</i> R1</div>
+      <div class="mv"><b>Crash Bandicoot 1 &middot; 2</b><span><i>B</i> jump &middot; <i>Y</i> spin &middot; Crash 2: <i>A</i> crouch / slide</span></div>
+      <div class="mv"><b>Spyro the Dragon</b><span><i>B</i> jump (again to glide) &middot; <i>Y</i> charge &middot; <i>A</i> flame</span></div>
+      <div class="mv"><b>Mega Man X4</b><span><i>Y</i> shoot (hold to charge) &middot; <i>B</i> jump &middot; <i>A</i> dash &middot; <i>L</i>/<i>R</i> weapon</span></div>
+      <div class="mv"><b>Castlevania: SotN</b><span><i>B</i> jump &middot; <i>Y</i> / <i>A</i> attack with each hand &middot; <i>X</i> back-dash</span></div>
+      <div class="mv"><b>Tekken 3</b><span><i>Y</i> left punch &middot; <i>X</i> right punch &middot; <i>B</i> left kick &middot; <i>A</i> right kick</span></div>
+      <div class="mv"><b>Street Fighter EX+&alpha;</b><span>Punches on top, kicks on the bottom row. Set any missing heavy attack to <i>L</i> / <i>R</i> in Config</span></div>
+      <div class="mv"><b>Tony Hawk's Pro Skater 2</b><span><i>B</i> ollie &middot; <i>Y</i> flip &middot; <i>A</i> grab &middot; <i>X</i> grind &middot; <i>L</i>/<i>R</i> spin</span></div>
+      <div class="mv"><b>Worms Armageddon</b><span>Aim with the stick, hold fire for power. Buttons are listed in the game's Options</span></div>
+    </div>
+    <div class="sys"><h3><b class="t PC">PC</b> Ports</h3>
+      <div class="mv"><b>Space Cadet Pinball</b><span><i>B</i> / <i>R</i> flippers (or <i>Y</i> / <i>L</i>) &middot; hold <i>A</i> or &darr; for the plunger &middot; stick nudges &middot; <i>Start</i> new game</span></div>
+      <div class="mv"><b>LBreakout2</b><span>Stick moves the paddle &middot; <i>Y</i> launch / fire &middot; <i>L</i> turbo &middot; <i>B</i> free a stuck ball &middot; <i>Start</i> select &middot; <i>Coin</i> menu</span></div>
+    </div>
+  </div>
+  <footer>
+    <span>Every game: <b>Coin + Start</b> quits. Not listed? Most games show their controls on the title screen or in Options.</span>
+  </footer>
 </section>
 
 </body>
