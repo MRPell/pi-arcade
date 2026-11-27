@@ -66,6 +66,13 @@
   aside button.reboot { background: #2a2833; color: var(--text); border: 1px solid #3a3845; border-radius: 6px;
                         padding: 6px 12px; cursor: pointer; font: inherit; }
   aside p { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+  aside .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+  aside input[type=datetime-local] { background: #2a2833; color: var(--text); border: 1px solid #3a3845;
+                                     border-radius: 6px; padding: 4px 6px; font: inherit; color-scheme: dark; }
+  aside .row button { background: #2a2833; color: var(--text); border: 1px solid #3a3845; border-radius: 6px;
+                      padding: 4px 9px; cursor: pointer; font: inherit; }
+  aside #usage td { font-variant-numeric: tabular-nums; }
+  .screen.notice .title { color: var(--warn); }
 </style>
 </head>
 <body>
@@ -104,6 +111,24 @@
       <dt>arcade-profiles.enforce</dt><dd id="flag">?</dd>
       <dt>session.json</dt><dd id="session">?</dd>
     </dl>
+    <h2>Cabinet clock</h2>
+    <p id="clock-text">?</p>
+    <div class="row">
+      <input type="datetime-local" id="clock-set" aria-label="Set the cabinet clock">
+      <button type="button" id="clock-set-btn">Set</button>
+    </div>
+    <div class="row" aria-label="Let time pass">
+      <button type="button" data-advance="60">+1 min</button>
+      <button type="button" data-advance="600">+10 min</button>
+      <button type="button" data-advance="3600">+1 hour</button>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="clock-synced"> Network time synced</label>
+    </div>
+    <h2>Play time</h2>
+    <table id="usage"><tr><td>?</td></tr></table>
+    <p>Setting the clock earlier than a game already played makes it untrusted (only the owner plays), as on the cabinet. To start over, clear the record.</p>
+    <div class="row"><button type="button" id="reset-usage">Clear play record and power-cycle</button></div>
     <h2>Keyboard</h2>
     <table>
       <tr><td>Joystick</td><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd></td></tr>
@@ -140,6 +165,8 @@
                  .then(render, function () {});
   }
 
+  function mins(seconds) { return Math.floor(seconds / 60) + ' min'; }
+
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -151,7 +178,11 @@
     screenEl.className = 'screen';
     screenEl.replaceChildren();
     screenEl.dataset.view = s.view;
-    if (s.view === 'signin' || s.view === 'welcome') {
+    if (s.view === 'refused' || s.view === 'timeup') {
+      screenEl.classList.add('notice');
+      screenEl.append(el('div', 'title', s.screen.title));
+      s.screen.lines.forEach(function (line) { screenEl.append(el('div', 'line', line)); });
+    } else if (s.view === 'signin' || s.view === 'welcome') {
       var sc = s.screen;
       screenEl.append(el('div', 'title', sc.title));
       if (s.view === 'signin') {
@@ -185,6 +216,23 @@
       screenEl.append(el('div', null, 'EmulationStation exited.'));
       screenEl.append(el('div', null, 'pi@retropie:~ $ _'));
     }
+    document.getElementById('clock-text').textContent = s.clock.text;
+    var setEl = document.getElementById('clock-set');
+    if (document.activeElement !== setEl) setEl.value = s.clock.wall;
+    document.getElementById('clock-synced').checked = s.clock.synced;
+    var usage = document.getElementById('usage');
+    usage.replaceChildren();
+    if (!s.usage) {
+      var r0 = el('tr'); r0.append(el('td', null, 'Not counted: flag off')); usage.append(r0);
+    } else {
+      s.usage.forEach(function (u) {
+        var tr = el('tr');
+        tr.append(el('td', null, u.name),
+                  el('td', null, mins(u.used) + ' used ' + u.period + ', ' +
+                     (u.left == null ? 'no limit' : mins(u.left) + ' left')));
+        usage.append(tr);
+      });
+    }
     document.getElementById('flag').textContent = s.enforce ? 'on' : 'off';
     document.getElementById('session').textContent = s.session ? JSON.stringify(s.session) : 'none';
   }
@@ -201,13 +249,13 @@
   });
   window.addEventListener('keydown', function (ev) {
     var input = KEYS[ev.code];
-    if (!input) return;
+    if (!input || ev.target.tagName === 'INPUT') return;
     ev.preventDefault();
     if (!ev.repeat) send(input, true);
   });
   window.addEventListener('keyup', function (ev) {
     var input = KEYS[ev.code];
-    if (!input) return;
+    if (!input || ev.target.tagName === 'INPUT') return;
     ev.preventDefault();
     send(input, false);
   });
@@ -216,6 +264,23 @@
   });
   document.getElementById('reboot').addEventListener('click', function () {
     queue = queue.then(function () { return post('/api/boot'); }).then(render);
+  });
+
+  function clock(body) {
+    queue = queue.then(function () { return post('/api/clock', body); }).then(render, function () {});
+  }
+  document.getElementById('reset-usage').addEventListener('click', function () {
+    queue = queue.then(function () { return post('/api/reset-usage'); }).then(render, function () {});
+  });
+  document.getElementById('clock-set-btn').addEventListener('click', function () {
+    var v = document.getElementById('clock-set').value;
+    if (v) clock({ set: v.slice(0, 16) });
+  });
+  document.querySelectorAll('[data-advance]').forEach(function (b) {
+    b.addEventListener('click', function () { clock({ advance: Number(b.dataset.advance) }); });
+  });
+  document.getElementById('clock-synced').addEventListener('change', function (ev) {
+    clock({ synced: ev.target.checked });
   });
 
   function poll() {

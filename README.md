@@ -61,7 +61,7 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **PlayStation:** copy `.cue` + `.bin` files to `/home/pi/RetroPie/roms/psx/` and the `scph1001.bin` BIOS to `/home/pi/RetroPie/BIOS/`. See [docs/psx.md](docs/psx.md).
 
-**Arcade profiles:** players can sign in with a button combo before playing. Off by default; see [docs/arcade-profiles.md](docs/arcade-profiles.md).
+**Arcade profiles:** players sign in with a button combo before playing, and each profile plays only in its hours and for its time limit. Off by default; see [docs/arcade-profiles.md](docs/arcade-profiles.md).
 
 **Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
 
@@ -97,7 +97,7 @@ pi-arcade/
 ├── config/
 │   ├── gpio_map.json        # GPIO pin assignments — edit this first
 │   ├── cabinet.json         # cabinet feature flags (arcade-profiles.enforce)
-│   ├── profiles.json        # arcade profiles and their sign-in combos
+│   ├── profiles.json        # arcade profiles: sign-in combos, hours, time limits
 │   └── retroarch-autoconfig/  # RetroArch profiles for the virtual pads
 ├── docs/
 │   ├── hardware-setup.md    # Wiring diagrams and physical assembly
@@ -111,7 +111,7 @@ pi-arcade/
 │   └── deploy.sh            # Runs on your Mac — rsync to Pi
 ├── src/
 │   ├── gpio_daemon.py       # GPIO → virtual gamepad daemon
-│   └── arcade_profiles/     # combo sign-in (docs/arcade-profiles.md)
+│   └── arcade_profiles/     # combo sign-in, hours and time limits (docs/arcade-profiles.md)
 ├── sim/                     # browser cabinet simulator (make sim)
 ├── systemd/
 │   └── pi-arcade-gpio.service

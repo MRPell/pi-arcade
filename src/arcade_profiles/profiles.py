@@ -3,7 +3,10 @@
 import json
 from collections import namedtuple
 
-Profile = namedtuple('Profile', 'id name role combo')
+from .rules import LimitsError, parse_limits
+
+# limits is None for the owner, who plays without limits.
+Profile = namedtuple('Profile', 'id name role combo limits')
 
 DIRECTIONS = ('up', 'down', 'left', 'right')
 BUTTONS = ('1', '2', '3', '4', '5', '6')
@@ -28,9 +31,19 @@ def parse_profiles(data):
     profiles = []
     for raw in data.get('profiles', []):
         combo = tuple(raw.get('combo', []))
-        p = Profile(raw['id'], raw['name'], raw['role'], combo)
-        if p.role not in ROLES:
-            raise ProfileError('%s: role must be one of %s' % (p.id, ', '.join(ROLES)))
+        role = raw['role']
+        if role not in ROLES:
+            raise ProfileError('%s: role must be one of %s' % (raw['id'], ', '.join(ROLES)))
+        if role == 'owner':
+            if 'limits' in raw:
+                raise ProfileError('%s: the owner has no limits' % raw['id'])
+            limits = None
+        else:
+            try:
+                limits = parse_limits(raw['id'], raw.get('limits'))
+            except LimitsError as e:
+                raise ProfileError(str(e))
+        p = Profile(raw['id'], raw['name'], role, combo, limits)
         if not combo or len(combo) > MAX_COMBO:
             raise ProfileError('%s: combo needs 1 to %d inputs' % (p.id, MAX_COMBO))
         for name in combo:

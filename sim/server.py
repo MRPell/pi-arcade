@@ -7,9 +7,14 @@ GET  /            the simulated cabinet
 GET  /api/state   what the cabinet shows
 POST /api/input   {"input": "left", "pressed": true}
 POST /api/boot    power-cycle: re-reads the cabinet flag and profiles
+POST /api/reset-usage  simulator only: forget every play recorded, then power-cycle
+POST /api/clock   simulator only: {"set": "YYYY-MM-DDTHH:MM"} sets the wall
+                  clock, {"advance": seconds} lets time pass, {"synced": bool}
+                  says whether network time has set the clock
 """
 
 import argparse
+import datetime as dt
 import json
 import os
 import sys
@@ -22,7 +27,7 @@ sys.path.insert(0, os.path.join(REPO, 'src'))
 
 from arcade_profiles.flag import enforce_enabled  # noqa: E402
 from arcade_profiles.profiles import load_profiles  # noqa: E402
-from sim.cabinet_sim import CabinetSim  # noqa: E402
+from sim.cabinet_sim import CabinetSim, SimClock  # noqa: E402
 
 INPUTS = {'up', 'down', 'left', 'right', '1', '2', '3', '4', '5', '6', 'coin', 'start'}
 PAGE = os.path.join(os.path.dirname(__file__), 'index.html')
@@ -77,15 +82,43 @@ class Handler(BaseHTTPRequestHandler):
             with srv.lock:
                 srv.sim = srv.boot()
                 self._json(srv.sim.state())
+        elif self.path == '/api/reset-usage':
+            with srv.lock:
+                try:
+                    os.remove(os.path.join(srv.state_dir, 'usage.json'))
+                except FileNotFoundError:
+                    pass
+                srv.sim = srv.boot()
+                self._json(srv.sim.state())
+        elif self.path == '/api/clock':
+            body = self._body()
+            with srv.lock:
+                try:
+                    if 'set' in body:
+                        srv.clock.set_wall(dt.datetime.strptime(body['set'], '%Y-%m-%dT%H:%M').timestamp())
+                    if 'advance' in body:
+                        seconds = float(body['advance'])
+                        if seconds < 0:
+                            raise ValueError('advance must not be negative')
+                        srv.clock.advance(seconds)
+                    if 'synced' in body:
+                        if not isinstance(body['synced'], bool):
+                            raise ValueError('synced must be a bool')
+                        srv.clock.synced = body['synced']
+                except (TypeError, ValueError) as e:
+                    return self._json({'error': str(e)}, 400)
+                self._json(srv.sim.state())
         else:
             self._json({'error': 'not found'}, 404)
 
 
-def make_server(port, cabinet_config, profiles_path, state_dir, host='127.0.0.1'):
+def make_server(port, cabinet_config, profiles_path, state_dir, host='127.0.0.1', clock=None):
     httpd = ThreadingHTTPServer((host, port), Handler)
     httpd.lock = threading.Lock()
+    httpd.clock = clock or SimClock()
+    httpd.state_dir = state_dir
     httpd.boot = lambda: CabinetSim(load_profiles(profiles_path),
-                                    enforce_enabled(cabinet_config), state_dir)
+                                    enforce_enabled(cabinet_config), state_dir, httpd.clock)
     httpd.sim = httpd.boot()
     return httpd
 

@@ -1,9 +1,15 @@
 {
-  "_comment": "Arcade profiles. Edit here on the owner's computer, then make deploy; nothing at the cabinet can change them. A combo is pressed one input at a time on the sign-in screen. Inputs: up, down, left, right, 1-6 (action buttons), start. Coin is never part of a combo: it clears the entry, and Coin + anything is a RetroArch hotkey. No combo may be the start of another.",
+  "_comment": "Arcade profiles. Edit here on the owner's computer, then make deploy; nothing at the cabinet can change them. A combo is pressed one input at a time on the sign-in screen. Inputs: up, down, left, right, 1-6 (action buttons), start. Coin is never part of a combo: it clears the entry, and Coin + anything is a RetroArch hotkey. No combo may be the start of another. limits (every profile but the owner's; see docs/arcade-profiles.md): hours by weekdays / weekends / mon..sun as \"HH:MM-HH:MM\"; time.minutes per \"day\", \"week\" or \"N days\" (with \"from\": \"YYYY-MM-DD\"), and rollover true to carry unused time into the next period.",
   "profiles": [
     { "id": "matt",  "name": "Matt",  "role": "owner",  "combo": ["up", "up", "down", "down", "1", "2"] },
-    { "id": "theo",  "name": "Theo",  "role": "player", "combo": ["left", "right", "left", "right", "1"] },
-    { "id": "john",  "name": "John",  "role": "player", "combo": ["right", "left", "right", "left", "2"] },
-    { "id": "guest", "name": "Guest", "role": "guest",  "combo": ["start"] }
+    { "id": "theo",  "name": "Theo",  "role": "player", "combo": ["left", "right", "left", "right", "1"],
+      "limits": { "hours": { "weekdays": "15:00-20:00", "weekends": "09:00-20:00" },
+                  "time": { "minutes": 60, "per": "day", "rollover": false } } },
+    { "id": "john",  "name": "John",  "role": "player", "combo": ["right", "left", "right", "left", "2"],
+      "limits": { "hours": { "weekdays": "15:00-20:00", "weekends": "09:00-20:00" },
+                  "time": { "minutes": 60, "per": "day", "rollover": false } } },
+    { "id": "guest", "name": "Guest", "role": "guest",  "combo": ["start"],
+      "limits": { "hours": { "weekdays": "15:00-20:00", "weekends": "09:00-20:00" },
+                  "time": { "minutes": 30, "per": "day", "rollover": false } } }
   ]
 }
