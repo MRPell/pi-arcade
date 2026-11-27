@@ -32,6 +32,16 @@ class SignIn:
         self.signed_in = None
         self.done = False
 
+    def update_profiles(self, profiles):
+        """The owner changed the profiles from their computer: match against
+        the new combos from now on. A half-entered combo starts again."""
+        profiles = list(profiles)
+        if profiles == self._profiles:
+            return
+        self._profiles = profiles
+        if self.signed_in is None:
+            self._entry = []
+
     def feed(self, name, pressed, now):
         self.tick(now)
         if pressed:

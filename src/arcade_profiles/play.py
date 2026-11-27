@@ -7,7 +7,7 @@ both refuse, count and stop play the same way and show the same words.
 import datetime as dt
 import subprocess
 
-from .rules import decide, period_bounds, remaining_seconds
+from .rules import decide, period_bounds, remaining_seconds, window_at
 
 DISMISS_SECONDS = 10.0   # a refusal or time-up screen stays this long, or until a button
 
@@ -40,6 +40,30 @@ def play_seconds(decision, wall):
     if decision.until is None:
         return None
     return max(0.0, decision.until.timestamp() - wall)
+
+
+def refresh_limit(profiles, ledger, wall, mono):
+    """Hold the running game to its profile's hours and time as they are now,
+    so a change the owner makes mid-game applies to it (M-3). A limit lowered
+    below what was already played stops the game at once, and that time still
+    counts. A profile no longer there keeps the limit it started with."""
+    o = ledger.open
+    if not o:
+        return
+    profile = next((p for p in profiles if p.id == o['profile']), None)
+    if profile is None:
+        return
+    if profile.role == 'owner':
+        o['limit'] = None
+        return
+    elapsed = max(0.0, mono - o['start_mono'])
+    start = dt.datetime.fromtimestamp(o['start'])
+    by_time = remaining_seconds(profile, start, ledger.data['plays'], ledger.since)
+    window = window_at(profile.limits, dt.datetime.fromtimestamp(wall))
+    by_hours = elapsed if window is None else elapsed + window[1].timestamp() - wall
+    # Time already played under the limit it had counts, even if the new one is lower.
+    played = elapsed if o['limit'] is None else min(elapsed, o['limit'])
+    o['limit'] = max(played, min(by_time, by_hours))
 
 
 # -- words -------------------------------------------------------------- #

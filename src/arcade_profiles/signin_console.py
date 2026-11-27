@@ -7,21 +7,21 @@ the session file, and exits 0 once they press a button to play.
 Usage: python3 -m arcade_profiles.signin_console
 """
 
-import os
 import select
 import sys
 import time
 
 from . import play
-from .console import PAD_NAME, REPO_DIR, clear, draw, open_pad
-from .profiles import load_profiles
+from .console import PAD_NAME, clear, draw, open_pad
 from .session import clear_session, state_dir, write_session
+from .settings import ProfilesWatch
 from .signin import SignIn
 from .usage import boot_id, locked
 
 
 def main():
-    profiles = load_profiles(os.path.join(REPO_DIR, 'config', 'profiles.json'))
+    watch = ProfilesWatch()
+    watch.current()
     directory = state_dir()
     clear_session(directory)
 
@@ -31,6 +31,7 @@ def main():
         return 1
 
     def describe(profile):
+        profiles = watch.current()
         synced = play.network_time_synced()
         with locked(directory) as ledger:
             ledger.recover(boot_id())
@@ -38,11 +39,12 @@ def main():
             decision = play.check(profiles, profile, wall, ledger, synced)
         return play.status_lines(profiles, decision, wall)
 
-    signin = SignIn(profiles, time.monotonic(), describe)
+    signin = SignIn(watch.profiles, time.monotonic(), describe)
     shown = None
     try:
         while not signin.done:
             now = time.monotonic()
+            signin.update_profiles(watch.current())
             signin.tick(now)
             screen = signin.screen()
             if screen != shown:

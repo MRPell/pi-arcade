@@ -9,9 +9,7 @@ import sys
 import time
 
 from .pad import PadDecoder, input_codes
-
-REPO_DIR = os.environ.get(
-    'PI_ARCADE_DIR', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from .settings import REPO_DIR
 PAD_NAME = 'Pi Arcade Controller'
 PAD_WAIT_SECONDS = 30
 
