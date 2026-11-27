@@ -8,6 +8,11 @@ GET  /api/state   what the cabinet shows
 POST /api/input   {"input": "left", "pressed": true}
 POST /api/boot    power-cycle: re-reads the cabinet flag and profiles
 POST /api/reset-usage  simulator only: forget every play recorded, then power-cycle
+
+The cabinet's settings (the flag and the profiles) live in --state-dir, as on
+the Pi. Each start of the simulator writes them fresh from --cabinet and
+--profiles and forgets every play; from then on the admin (make admin-sim)
+changes them there, and a power-cycle keeps them.
 POST /api/clock   simulator only: {"set": "YYYY-MM-DDTHH:MM"} sets the wall
                   clock, {"advance": seconds} lets time pass, {"synced": bool}
                   says whether network time has set the clock
@@ -25,8 +30,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.join(REPO, 'src'))
 
+from arcade_profiles import settings  # noqa: E402
 from arcade_profiles.flag import enforce_enabled  # noqa: E402
-from arcade_profiles.profiles import load_profiles  # noqa: E402
 from sim.cabinet_sim import CabinetSim, SimClock  # noqa: E402
 
 INPUTS = {'up', 'down', 'left', 'right', '1', '2', '3', '4', '5', '6', 'coin', 'start'}
@@ -112,13 +117,26 @@ class Handler(BaseHTTPRequestHandler):
             self._json({'error': 'not found'}, 404)
 
 
+def fresh_cabinet(state_dir, cabinet_config, profiles_path):
+    """The simulated cabinet's disk at the start of a run: the given flag and
+    profiles as its settings, no one signed in and no play recorded."""
+    for name in ('usage.json', 'session.json'):
+        try:
+            os.remove(os.path.join(state_dir, name))
+        except FileNotFoundError:
+            pass
+    with open(profiles_path) as f:
+        profiles = json.load(f)
+    settings.write({'enforce': enforce_enabled(cabinet_config), 'profiles': profiles}, state_dir)
+
+
 def make_server(port, cabinet_config, profiles_path, state_dir, host='127.0.0.1', clock=None):
+    fresh_cabinet(state_dir, cabinet_config, profiles_path)
     httpd = ThreadingHTTPServer((host, port), Handler)
     httpd.lock = threading.Lock()
     httpd.clock = clock or SimClock()
     httpd.state_dir = state_dir
-    httpd.boot = lambda: CabinetSim(load_profiles(profiles_path),
-                                    enforce_enabled(cabinet_config), state_dir, httpd.clock)
+    httpd.boot = lambda: CabinetSim(state_dir, httpd.clock)
     httpd.sim = httpd.boot()
     return httpd
 
@@ -130,12 +148,13 @@ def main():
                         help='cabinet flag config (default: the dev one, flag on)')
     parser.add_argument('--profiles', default=os.path.join(REPO, 'config', 'profiles.json'))
     parser.add_argument('--state-dir', default=None,
-                        help='where session.json is written (default: a temp dir)')
+                        help='the cabinet\'s state and settings, shared with make admin-sim '
+                             '(default: a temp dir)')
     args = parser.parse_args()
     state_dir = args.state_dir or tempfile.mkdtemp(prefix='pi-arcade-sim-')
     httpd = make_server(args.port, args.cabinet, args.profiles, state_dir)
     print('Pi Arcade simulator: http://127.0.0.1:%d  (flag %s, state %s)' % (
-        args.port, 'on' if httpd.sim.enforce else 'off', state_dir), flush=True)
+        args.port, 'on' if httpd.sim.enforce_setting() else 'off', state_dir), flush=True)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
