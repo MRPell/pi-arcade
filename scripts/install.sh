@@ -223,7 +223,24 @@ if ! xmlstarlet sel -t -c "/systemList/system[name='ports']" "$ES_SYSTEMS" >/dev
 fi
 
 # ------------------------------------------------------------------ #
-# 7. Done
+# 7. Arcade profiles: sign in with a button combo
+# ------------------------------------------------------------------ #
+# EmulationStation is started through scripts/arcade-session.sh. With
+# arcade-profiles.enforce off in config/cabinet.json (the default) it just
+# runs EmulationStation as before; on, players sign in first.
+AUTOSTART="/opt/retropie/configs/all/autostart.sh"
+if [[ -f "$AUTOSTART" ]] && ! grep -q 'arcade-session.sh' "$AUTOSTART"; then
+  if grep -q '^emulationstation #auto$' "$AUTOSTART"; then
+    log "Starting EmulationStation through arcade-session.sh"
+    cp -n "$AUTOSTART" "$AUTOSTART.pre-profiles"
+    sed -i "s|^emulationstation #auto\$|bash $REPO_DIR/scripts/arcade-session.sh #auto|" "$AUTOSTART"
+  else
+    log "WARNING: $AUTOSTART has no 'emulationstation #auto' line; arcade profiles not hooked in"
+  fi
+fi
+
+# ------------------------------------------------------------------ #
+# 8. Done
 # ------------------------------------------------------------------ #
 cat <<'EOF'
 

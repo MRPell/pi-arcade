@@ -1,0 +1,4 @@
+{
+  "_comment": "Cabinet feature flags. Deployed to the Pi as-is. arcade-profiles.enforce: sign-in by button combo before EmulationStation (off = the cabinet boots and plays as before).",
+  "arcade-profiles.enforce": false
+}

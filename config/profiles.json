@@ -1,0 +1,9 @@
+{
+  "_comment": "Arcade profiles. Edit here on the owner's computer, then make deploy; nothing at the cabinet can change them. A combo is pressed one input at a time on the sign-in screen. Inputs: up, down, left, right, 1-6 (action buttons), start. Coin is never part of a combo: it clears the entry, and Coin + anything is a RetroArch hotkey. No combo may be the start of another.",
+  "profiles": [
+    { "id": "matt",  "name": "Matt",  "role": "owner",  "combo": ["up", "up", "down", "down", "1", "2"] },
+    { "id": "theo",  "name": "Theo",  "role": "player", "combo": ["left", "right", "left", "right", "1"] },
+    { "id": "john",  "name": "John",  "role": "player", "combo": ["right", "left", "right", "left", "2"] },
+    { "id": "guest", "name": "Guest", "role": "guest",  "combo": ["start"] }
+  ]
+}

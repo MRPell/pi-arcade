@@ -33,4 +33,17 @@ gpio-test:
 status:
 	ssh $(PI_HOST) "systemctl status pi-arcade-gpio"
 
-.PHONY: deploy install deploy-install ssh logs restart-daemon gpio-test status
+# Run the unit tests (keybridge's need python3-evdev, so run those on the Pi)
+test:
+	python3 -m unittest discover -s tests -p 'test_[!k]*.py'
+
+# Cabinet simulator in the browser, arcade-profiles.enforce on (dev)
+PORT ?= 21000
+sim:
+	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.dev.json
+
+# Same, with the cabinet's shipped config (flag off): boots as before profiles
+sim-flag-off:
+	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.json
+
+.PHONY: test sim sim-flag-off deploy install deploy-install ssh logs restart-daemon gpio-test status
