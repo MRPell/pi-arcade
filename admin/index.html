@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arcade profiles admin</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --line: #e3e0d8; --text: #1d1c1a; --muted: #6b6860;
+    --accent: #2563eb; --accent-text: #fff; --ok: #15803d; --ok-bg: #dcfce7; --off-bg: #eceae4;
+    --warn: #b45309; --err: #b91c1c; --err-bg: #fee2e2; --chip: #eef2ff; --chip-text: #1e3a8a;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121214; --card: #1b1b1f; --line: #2e2d33; --text: #ecebf0; --muted: #9b99a6;
+      --accent: #3b82f6; --ok: #4ade80; --ok-bg: #14321f; --off-bg: #2a2930;
+      --warn: #fbbf24; --err: #fca5a5; --err-bg: #3b1416; --chip: #1e2a4a; --chip-text: #c7d6ff;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 16px 120px; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between;
+           margin-bottom: 20px; }
+  h1 { font-size: 22px; margin: 0; }
+  .target { color: var(--muted); font-size: 14px; }
+  .target b { color: var(--text); font-weight: 600; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 28px 0 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--card); color: var(--text); padding: 6px 12px; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  button.danger { color: var(--err); }
+  button:disabled { opacity: .5; cursor: default; }
+  input, select { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line);
+                  border-radius: 6px; padding: 5px 8px; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .flag { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+  .pill { display: inline-block; font-weight: 700; padding: 3px 12px; border-radius: 999px; background: var(--off-bg); }
+  .pill.on { background: var(--ok-bg); color: var(--ok); }
+  .flag p { flex-basis: 100%; margin: 0; }
+
+  .profile-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .profile-head input { font-size: 17px; font-weight: 600; width: 12em; max-width: 100%; }
+  .role { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+          border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; }
+  .profile-head .spacer { flex: 1; }
+  .field { display: grid; grid-template-columns: 8.5em minmax(0, 1fr); gap: 6px 14px; padding: 10px 0;
+           border-top: 1px solid var(--line); }
+  .field > .label { color: var(--muted); padding-top: 5px; }
+  @media (max-width: 560px) { .field { grid-template-columns: 1fr; } .field > .label { padding-top: 0; } }
+
+  .combo { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 34px; }
+  .chip { background: var(--chip); color: var(--chip-text); border-radius: 6px; padding: 3px 10px; font-weight: 600;
+          min-width: 2.2em; text-align: center; }
+  .pad { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .pad button { min-width: 2.6em; padding: 4px 8px; }
+
+  .hours-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 4px 0; }
+  .hours-row .day { width: 9.5em; }
+  .range { display: inline-flex; gap: 4px; align-items: center; }
+  .range input { width: 4.6em; text-align: center; }
+  .link { border: 0; background: none; color: var(--accent); padding: 2px 4px; }
+  .x { border: 0; background: none; color: var(--muted); padding: 2px 6px; }
+  .limit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .limit input[type=number] { width: 5.5em; }
+  label.check { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+
+  .add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+         padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .bar .inner { max-width: 860px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .bar .status { flex: 1; min-width: 12em; }
+  .msg-err { color: var(--err); background: var(--err-bg); border-radius: 8px; padding: 8px 12px; }
+  .msg-ok { color: var(--ok); }
+  .dirty { color: var(--warn); font-weight: 600; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Arcade profiles admin</h1>
+    <div class="target">Cabinet: <b id="target">connecting&hellip;</b>
+      <button type="button" id="reload" class="link">Reload from cabinet</button></div>
+  </header>
+
+  <div id="load-error" class="msg-err" role="alert" hidden></div>
+
+  <section id="main" hidden>
+    <h2>Profile enforcement</h2>
+    <div class="card flag">
+      <span>arcade-profiles.enforce is</span>
+      <span class="pill" id="flag-pill">?</span>
+      <button type="button" id="flag-btn" class="primary">?</button>
+      <p class="muted small" id="flag-note"></p>
+    </div>
+
+    <h2>Profiles</h2>
+    <p class="muted small">Combos are pressed one input at a time on the cabinet's sign-in screen: joystick
+      directions, buttons 1&ndash;6 and Start, up to 8. Coin is never part of one. No combo may be the start of another.</p>
+    <div id="profiles"></div>
+    <div class="card add">
+      <label for="new-name">Add a player</label>
+      <input id="new-name" placeholder="Name" maxlength="20">
+      <button type="button" id="add-btn">Add</button>
+    </div>
+  </section>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <div class="inner">
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <button type="button" id="discard">Discard changes</button>
+    <button type="button" id="save" class="primary">Save to cabinet</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var INPUTS = [['up', '↑ Up'], ['down', '↓ Down'], ['left', '← Left'], ['right', '→ Right'],
+                ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6', '6'], ['start', 'Start']];
+  var LABEL = {}; INPUTS.forEach(function (i) { LABEL[i[0]] = i[1]; });
+  var MAX_COMBO = 8;
+  var DAYS = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'],
+              ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']];
+  var GROUPS = [['weekdays', 'Weekdays (Mon–Fri)'], ['weekends', 'Weekends (Sat, Sun)']];
+  var ROLE = { owner: 'Owner', player: 'Player', guest: 'Guest' };
+
+  var saved = null;   // the cabinet's profiles file as last read or saved
+  var draft = null;   // the owner's edits, same shape
+  var enforce = null;
+  var busy = false;
+  var note = null;    // {kind: 'ok'|'err', text}
+  var confirmRemove = null;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, attrs, children) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'text') e.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] !== false && attrs[k] != null) e.setAttribute(k, attrs[k] === true ? '' : attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) e.append(c); });
+    return e;
+  }
+  function copy(x) { return JSON.parse(JSON.stringify(x)); }
+  function dirty() { return draft && JSON.stringify(draft) !== JSON.stringify(saved); }
+
+  function api(method, path, body) {
+    return fetch(path, { method: method, headers: { 'Content-Type': 'application/json' },
+                         body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error); return j; }); });
+  }
+
+  function took(state, keepDraft) {
+    $('target').textContent = state.target;
+    enforce = state.enforce;
+    saved = state.profiles;
+    if (!keepDraft) draft = copy(saved);
+    $('load-error').hidden = true;
+    $('main').hidden = false;
+    $('bar').hidden = false;
+  }
+
+  function load() {
+    busy = true; render();
+    api('GET', '/api/cabinet').then(function (s) { note = null; took(s); },
+      function (e) { $('load-error').textContent = e.message; $('load-error').hidden = false; })
+      .then(function () { busy = false; render(); });
+  }
+
+  // -- hours: {"weekdays": "15:00-20:00", "sat": ["09:00-12:00", "14:00-20:00"]} <-> rows of ranges
+  function ranges(value) {
+    var list = typeof value === 'string' ? [value] : (value || []);
+    return list.map(function (v) { var p = String(v).split('-'); return { start: (p[0] || '').trim(), end: (p[1] || '').trim() }; });
+  }
+  function packRanges(list) {
+    var out = list.map(function (r) { return r.start + '-' + r.end; });
+    return out.length === 1 ? out[0] : out;
+  }
+
+  function hoursEditor(p) {
+    var hours = p.limits.hours;
+    GROUPS.forEach(function (g) { if (!(g[0] in hours)) hours[g[0]] = []; });
+    var box = el('div');
+    var keys = GROUPS.map(function (g) { return g; }).concat(DAYS.filter(function (d) { return d[0] in hours; }));
+    keys.forEach(function (k) {
+      var key = k[0], list = ranges(hours[key]);
+      function store() { hours[key] = packRanges(list); render(); }
+      var row = el('div', { class: 'hours-row' }, [el('span', { class: 'day', text: k[1] })]);
+      if (!list.length) row.append(el('span', { class: 'muted', text: 'No play' }));
+      list.forEach(function (r, i) {
+        function bind(field) {
+          return el('input', { value: r[field], placeholder: field === 'start' ? '15:00' : '20:00', inputmode: 'numeric',
+                               'aria-label': p.name + ' ' + k[1] + ' ' + (field === 'start' ? 'from' : 'until'),
+                               oninput: function (ev) { r[field] = ev.target.value.trim(); hours[key] = packRanges(list); renderBar(); } });
+        }
+        row.append(el('span', { class: 'range' }, [bind('start'), el('span', { class: 'muted', text: 'to' }), bind('end'),
+          el('button', { type: 'button', class: 'x', title: 'Remove these hours', 'aria-label': 'Remove these hours',
+                         text: '×', onclick: function () { list.splice(i, 1); store(); } })]));
+      });
+      row.append(el('button', { type: 'button', class: 'link', text: list.length ? '+ more hours' : '+ add hours',
+        onclick: function () { list.push({ start: '15:00', end: '20:00' }); store(); } }));
+      if (DAYS.some(function (d) { return d[0] === key; }))
+        row.append(el('button', { type: 'button', class: 'link', text: 'use the weekday/weekend hours',
+          onclick: function () { delete hours[key]; render(); } }));
+      box.append(row);
+    });
+    var free = DAYS.filter(function (d) { return !(d[0] in hours); });
+    if (free.length) {
+      var sel = el('select', { 'aria-label': 'Different hours for one day', onchange: function (ev) {
+        var day = ev.target.value; if (!day) return;
+        var group = DAYS.findIndex(function (d) { return d[0] === day; }) < 5 ? 'weekdays' : 'weekends';
+        hours[day] = copy(hours[group]); render();
+      } }, [el('option', { value: '', text: 'Different hours for one day…' })]
+        .concat(free.map(function (d) { return el('option', { value: d[0], text: d[1] }); })));
+      box.append(el('div', { class: 'hours-row' }, [sel]));
+    }
+    return box;
+  }
+
+  function limitEditor(p) {
+    var t = p.limits.time;
+    var nDays = /^(\d+) days$/.exec(t.per || '');
+    var kind = t.per === 'day' || t.per === 'week' ? t.per : 'days';
+    var box = el('div');
+    var line = el('div', { class: 'limit' }, [
+      el('input', { type: 'number', min: '0', step: '5', value: t.minutes, 'aria-label': p.name + ' minutes',
+                    oninput: function (ev) { var n = Number(ev.target.value);
+                      t.minutes = ev.target.value !== '' && Number.isInteger(n) ? n : ev.target.value; renderBar(); } }),
+      el('span', { text: 'minutes per' }),
+      el('select', { 'aria-label': p.name + ' period', onchange: function (ev) {
+        var v = ev.target.value;
+        if (v === 'days') { t.per = '3 days'; if (!t.from) t.from = new Date().toISOString().slice(0, 10); }
+        else { t.per = v; delete t.from; }
+        render();
+      } }, [['day', 'day'], ['week', 'week (Mon–Sun)'], ['days', 'few days']].map(function (o) {
+        return el('option', { value: o[0], text: o[1], selected: o[0] === kind });
+      }))
+    ]);
+    if (kind === 'days') {
+      line.append(el('span', { text: 'every' }),
+        el('input', { type: 'number', min: '1', value: nDays ? nDays[1] : '', 'aria-label': p.name + ' days per period',
+                      oninput: function (ev) { t.per = ev.target.value + ' days'; renderBar(); } }),
+        el('span', { text: 'days, counting from' }),
+        el('input', { type: 'date', value: t.from || '', 'aria-label': p.name + ' first period starts',
+                      oninput: function (ev) { t.from = ev.target.value; renderBar(); } }));
+    }
+    box.append(line);
+    box.append(el('label', { class: 'check' }, [
+      el('input', { type: 'checkbox', checked: !!t.rollover, onchange: function (ev) { t.rollover = ev.target.checked; renderBar(); } }),
+      el('span', { text: 'Unused time rolls over to the next period (one period back, so at most double)' })]));
+    return box;
+  }
+
+  function comboEditor(p) {
+    var chips = el('div', { class: 'combo', 'aria-label': p.name + ' combo' });
+    if (!p.combo.length) chips.append(el('span', { class: 'muted', text: 'No combo yet: press the inputs below' }));
+    p.combo.forEach(function (c) { chips.append(el('span', { class: 'chip', text: LABEL[c] || c })); });
+    var pad = el('div', { class: 'pad' });
+    INPUTS.forEach(function (i) {
+      pad.append(el('button', { type: 'button', text: i[1], disabled: p.combo.length >= MAX_COMBO,
+        'aria-label': 'Add ' + i[0] + ' to ' + p.name + "'s combo",
+        onclick: function () { p.combo.push(i[0]); render(); } }));
+    });
+    pad.append(el('button', { type: 'button', text: 'Undo', disabled: !p.combo.length,
+                              onclick: function () { p.combo.pop(); render(); } }),
+               el('button', { type: 'button', text: 'Clear', disabled: !p.combo.length,
+                              onclick: function () { p.combo.length = 0; render(); } }));
+    return el('div', {}, [chips, pad]);
+  }
+
+  function field(label, body) {
+    return el('div', { class: 'field' }, [el('div', { class: 'label', text: label }), el('div', {}, [body])]);
+  }
+
+  function profileCard(p, index) {
+    var head = el('div', { class: 'profile-head' }, [
+      el('input', { value: p.name, 'aria-label': 'Name', maxlength: '20',
+                    oninput: function (ev) { p.name = ev.target.value; renderBar(); } }),
+      el('span', { class: 'role', text: ROLE[p.role] || p.role }),
+      el('span', { class: 'spacer' })]);
+    if (p.role === 'player') {
+      var sure = confirmRemove === p.id;
+      head.append(el('button', { type: 'button', class: 'danger', text: sure ? 'Click again to remove ' + p.name : 'Remove',
+        onclick: function () {
+          if (sure) { draft.profiles.splice(index, 1); confirmRemove = null; } else { confirmRemove = p.id; }
+          render();
+        } }));
+    }
+    var card = el('div', { class: 'card', 'data-profile': p.id }, [head, field('Combo', comboEditor(p))]);
+    if (p.role === 'owner') {
+      card.append(field('Play', el('span', { text: 'Unlimited, at any hour' })));
+    } else {
+      card.append(field('Play hours', hoursEditor(p)), field('Time limit', limitEditor(p)));
+      if (p.role === 'guest')
+        card.append(field('', el('span', { class: 'muted small',
+          text: 'Guest cannot play while any player’s time is used up, so it never adds time for them.' })));
+    }
+    return card;
+  }
+
+  function slug(name) {
+    var base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'player';
+    var id = base, n = 2;
+    while (draft.profiles.some(function (p) { return p.id === id; })) id = base + '-' + n++;
+    return id;
+  }
+
+  function friendly(message) {
+    // The cabinet's checks name profiles by id; show their names instead.
+    (draft ? draft.profiles : []).forEach(function (p) {
+      message = message.replace(new RegExp('\\b' + p.id.replace(/[^a-z0-9]/g, '\\$&') + '\\b', 'g'), p.name);
+    });
+    return message;
+  }
+
+  function renderBar() {
+    var status = $('status');
+    status.replaceChildren();
+    if (note && (note.kind === 'err' || !dirty()))
+      status.append(el('div', { class: note.kind === 'err' ? 'msg-err' : 'msg-ok', text: note.text }));
+    else if (dirty()) status.append(el('span', { class: 'dirty', text: 'Unsaved changes' }));
+    else if (saved) status.append(el('span', { class: 'muted', text: 'Showing what the cabinet has.' }));
+    $('save').disabled = busy || !dirty();
+    $('discard').disabled = busy || !dirty();
+  }
+
+  function render() {
+    if (enforce !== null) {
+      $('flag-pill').textContent = enforce ? 'On' : 'Off';
+      $('flag-pill').className = 'pill' + (enforce ? ' on' : '');
+      $('flag-btn').textContent = enforce ? 'Turn off' : 'Turn on';
+      $('flag-btn').disabled = busy;
+      $('flag-note').textContent = (enforce
+        ? 'On: players sign in with their combo and play within their hours and time.'
+        : 'Off: the cabinet plays as it did before profiles, with no sign-in and no limits.')
+        + ' A change takes effect the next time EmulationStation quits on the cabinet (Start, Quit); no restart needed.';
+    }
+    if (draft) {
+      var list = $('profiles');
+      var focused = document.activeElement && document.activeElement.getAttribute('aria-label');
+      list.replaceChildren();
+      draft.profiles.forEach(function (p, i) { list.append(profileCard(p, i)); });
+      if (focused) {
+        var again = list.querySelector('[aria-label="' + focused.replace(/"/g, '\\"') + '"]');
+        if (again && again.tagName !== 'BUTTON') again.focus();
+      }
+    }
+    renderBar();
+  }
+
+  $('reload').addEventListener('click', function () {
+    if (dirty() && !$('reload').dataset.sure) {
+      $('reload').dataset.sure = '1';
+      $('reload').textContent = 'Discard changes and reload?';
+      return;
+    }
+    delete $('reload').dataset.sure;
+    $('reload').textContent = 'Reload from cabinet';
+    load();
+  });
+  $('discard').addEventListener('click', function () { draft = copy(saved); note = null; confirmRemove = null; render(); });
+  $('save').addEventListener('click', function () {
+    busy = true; note = null; render();
+    api('POST', '/api/profiles', { profiles: draft }).then(function (s) {
+      took(s);
+      note = { kind: 'ok', text: 'Saved to the cabinet. Combos work at sign-in right away; hours and time limits apply to the next game and to one already running.' };
+    }, function (e) { note = { kind: 'err', text: friendly(e.message) }; })
+      .then(function () { busy = false; render(); });
+  });
+  $('flag-btn').addEventListener('click', function () {
+    busy = true; render();
+    api('POST', '/api/enforce', { enforce: !enforce }).then(function (s) {
+      took(s, true);
+      note = { kind: 'ok', text: 'Enforcement is now ' + (s.enforce ? 'on' : 'off') + ' on the cabinet. It takes effect the next time EmulationStation quits.' };
+    }, function (e) { note = { kind: 'err', text: e.message }; })
+      .then(function () { busy = false; render(); });
+  });
+  $('add-btn').addEventListener('click', function () {
+    var name = $('new-name').value.trim();
+    if (!name) { $('new-name').focus(); return; }
+    draft.profiles.push({ id: slug(name), name: name, role: 'player', combo: [],
+      limits: { hours: { weekdays: '15:00-20:00', weekends: '09:00-20:00' },
+                time: { minutes: 60, per: 'day', rollover: false } } });
+    $('new-name').value = '';
+    note = null;
+    render();
+  });
+  $('new-name').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') $('add-btn').click(); });
+  // Any edit clears the last saved or error note, so the bar shows "Unsaved changes".
+  function clearNote(ev) { if (note && $('main').contains(ev.target)) { note = null; renderBar(); } }
+  document.addEventListener('input', clearNote, true);
+  document.addEventListener('click', clearNote, true);
+  window.addEventListener('beforeunload', function (ev) { if (dirty()) { ev.preventDefault(); ev.returnValue = ''; } });
+
+  load();
+})();
+</script>
+</body>
+</html>
