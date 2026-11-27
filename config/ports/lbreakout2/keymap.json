@@ -1,0 +1,20 @@
+{
+  "_comment": "LBreakout2 has no joystick support; keybridge.py turns the panel into these keys. Keys match LBreakout2's defaults (left/right arrows, Space/Y fire, X turbo, Backspace return ball, W warp).",
+  "buttons": {
+    "BTN_SOUTH": "KEY_SPACE",
+    "BTN_EAST": "KEY_Y",
+    "BTN_NORTH": "KEY_X",
+    "BTN_WEST": "KEY_BACKSPACE",
+    "BTN_TL": "KEY_W",
+    "BTN_TR": "KEY_N",
+    "BTN_START": "KEY_ENTER",
+    "BTN_SELECT": "KEY_ESC"
+  },
+  "axes": {
+    "left": "KEY_LEFT",
+    "right": "KEY_RIGHT",
+    "up": "KEY_UP",
+    "down": "KEY_DOWN"
+  },
+  "exit_chord": ["BTN_SELECT", "BTN_START"]
+}

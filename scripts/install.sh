@@ -130,7 +130,74 @@ for roms_dir in "$MAME_ROMS_DIR" "$MEGADRIVE_ROMS_DIR" "$NES_ROMS_DIR" "$SNES_RO
 done
 
 # ------------------------------------------------------------------ #
-# 6. Done
+# 6. Keyboard-only ports (EmulationStation "Ports" menu)
+# ------------------------------------------------------------------ #
+# These games only read the keyboard, so each launch goes through
+# src/keybridge.py, which turns the panel's virtual gamepad into keys from
+# config/ports/<id>/keymap.json. keybridge runs as pi under runcommand, so the
+# input group needs write access to /dev/uinput.
+cat > /etc/udev/rules.d/99-pi-arcade-uinput.rules <<'EOF'
+KERNEL=="uinput", GROUP="input", MODE="0660"
+EOF
+udevadm control --reload-rules
+udevadm trigger --name-match=uinput
+
+apt-get -o Acquire::Check-Valid-Until=false install -y --no-install-recommends lbreakout2
+
+PORTS_ROMS_DIR="/home/pi/RetroPie/roms/ports"
+mkdir -p "$PORTS_ROMS_DIR"
+chown pi:pi "$PORTS_ROMS_DIR"
+
+# id|menu title|command
+PORTS=(
+  "lbreakout2|LBreakout2|/usr/games/lbreakout2"
+)
+for entry in "${PORTS[@]}"; do
+  IFS='|' read -r port_id port_title port_cmd <<< "$entry"
+  log "Registering port $port_title"
+  launcher="$PORTS_ROMS_DIR/$port_title.sh"
+  cat > "$launcher" <<EOF
+#!/bin/bash
+"/opt/retropie/supplementary/runcommand/runcommand.sh" 0 _PORT_ "$port_id" ""
+EOF
+  chmod +x "$launcher"
+  chown pi:pi "$launcher"
+
+  port_conf_dir="/opt/retropie/configs/ports/$port_id"
+  mkdir -p "$port_conf_dir"
+  cat > "$port_conf_dir/emulators.cfg" <<EOF
+$port_id = "python3 $REPO_DIR/src/keybridge.py $REPO_DIR/config/ports/$port_id/keymap.json -- $port_cmd"
+default = "$port_id"
+EOF
+  chown -R pi:pi "$port_conf_dir"
+done
+
+# LBreakout2 starts windowed by default; seed a fullscreen config only if the
+# player has none yet, so later in-game settings are kept.
+if [[ ! -f /home/pi/.lgames/lbreakout2.conf ]]; then
+  install -d -o pi -g pi /home/pi/.lgames
+  install -o pi -g pi -m 644 "$REPO_DIR/config/ports/lbreakout2/lbreakout2.conf" /home/pi/.lgames/lbreakout2.conf
+fi
+
+# EmulationStation lists a system only if es_systems.cfg has it. RetroPie adds
+# "ports" when it installs one of its own port packages; do the same here.
+ES_SYSTEMS="/etc/emulationstation/es_systems.cfg"
+if ! xmlstarlet sel -t -c "/systemList/system[name='ports']" "$ES_SYSTEMS" >/dev/null; then
+  log "Adding the Ports system to EmulationStation"
+  xmlstarlet ed -L \
+    -s /systemList -t elem -n system \
+    -s '/systemList/system[last()]' -t elem -n name -v ports \
+    -s '/systemList/system[last()]' -t elem -n fullname -v Ports \
+    -s '/systemList/system[last()]' -t elem -n path -v "$PORTS_ROMS_DIR" \
+    -s '/systemList/system[last()]' -t elem -n extension -v '.sh .SH' \
+    -s '/systemList/system[last()]' -t elem -n command -v 'bash %ROM%' \
+    -s '/systemList/system[last()]' -t elem -n platform -v pc \
+    -s '/systemList/system[last()]' -t elem -n theme -v ports \
+    "$ES_SYSTEMS"
+fi
+
+# ------------------------------------------------------------------ #
+# 7. Done
 # ------------------------------------------------------------------ #
 cat <<'EOF'
 

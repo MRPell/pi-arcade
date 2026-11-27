@@ -59,6 +59,8 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **Game Boy Advance:** copy `.gba` ROMs to `/home/pi/RetroPie/roms/gba/`. See [docs/gba.md](docs/gba.md).
 
+**Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
+
 ### 6. Connect the TV and first boot
 
 - Plug in **HDMI before powering on** — the Pi 3 only detects the display at boot; hotplug is unreliable.
