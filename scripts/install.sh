@@ -144,6 +144,31 @@ udevadm trigger --name-match=uinput
 
 apt-get -o Acquire::Check-Valid-Until=false install -y --no-install-recommends lbreakout2
 
+# Space Cadet Pinball: open-source rebuild of the Full Tilt! Pinball table.
+# Built from source (not in apt). The game data (CADET.DAT and its sounds) is
+# not redistributable — copy it from your own copy into PINBALL_DATA_DIR.
+PINBALL_SRC="/home/pi/SpaceCadetPinball"
+PINBALL_REV="cb9b7b8"
+PINBALL_BIN="$PINBALL_SRC/bin/SpaceCadetPinball"
+PINBALL_DATA_DIR="/home/pi/.local/share/SpaceCadetPinball"
+if [[ ! -x "$PINBALL_BIN" ]]; then
+  log "Building Space Cadet Pinball (~20 min on a Pi 3B)..."
+  apt-get -o Acquire::Check-Valid-Until=false install -y --no-install-recommends \
+    cmake libsdl2-dev libsdl2-mixer-dev
+  if [[ ! -d "$PINBALL_SRC/.git" ]]; then
+    sudo -u pi git clone https://github.com/k4zmu2a/SpaceCadetPinball.git "$PINBALL_SRC"
+  fi
+  sudo -u pi git -C "$PINBALL_SRC" fetch -q origin
+  sudo -u pi git -C "$PINBALL_SRC" checkout -q "$PINBALL_REV"
+  sudo -u pi cmake -S "$PINBALL_SRC" -B "$PINBALL_SRC/build" -DCMAKE_BUILD_TYPE=Release
+  sudo -u pi make -C "$PINBALL_SRC/build" -j2
+fi
+install -d -o pi -g pi "$PINBALL_DATA_DIR"
+# Fullscreen with no menu bar; seeded once so in-game changes are kept.
+if [[ ! -f "$PINBALL_DATA_DIR/imgui_pb.ini" ]]; then
+  install -o pi -g pi -m 644 "$REPO_DIR/config/ports/spacecadetpinball/imgui_pb.ini" "$PINBALL_DATA_DIR/"
+fi
+
 PORTS_ROMS_DIR="/home/pi/RetroPie/roms/ports"
 mkdir -p "$PORTS_ROMS_DIR"
 chown pi:pi "$PORTS_ROMS_DIR"
@@ -151,6 +176,7 @@ chown pi:pi "$PORTS_ROMS_DIR"
 # id|menu title|command
 PORTS=(
   "lbreakout2|LBreakout2|/usr/games/lbreakout2"
+  "spacecadetpinball|Space Cadet Pinball|$PINBALL_BIN"
 )
 for entry in "${PORTS[@]}"; do
   IFS='|' read -r port_id port_title port_cmd <<< "$entry"

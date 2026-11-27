@@ -63,5 +63,26 @@ class TranslatorTest(unittest.TestCase):
         )
 
 
+    def test_shared_key_held_until_every_source_releases(self):
+        t = Translator({
+            'buttons': {'BTN_SOUTH': 'KEY_SPACE', 'BTN_EAST': 'KEY_SPACE'},
+            'axes': {'down': 'KEY_SPACE'},
+        })
+        self.assertEqual(t.feed(e.EV_KEY, e.BTN_SOUTH, 1), [(e.KEY_SPACE, 1)])
+        self.assertEqual(t.feed(e.EV_KEY, e.BTN_EAST, 1), [])
+        self.assertEqual(t.feed(e.EV_ABS, e.ABS_Y, 1), [])
+        self.assertEqual(t.feed(e.EV_KEY, e.BTN_SOUTH, 0), [])
+        self.assertEqual(t.feed(e.EV_ABS, e.ABS_Y, 0), [])
+        self.assertEqual(t.feed(e.EV_KEY, e.BTN_EAST, 0), [(e.KEY_SPACE, 0)])
+
+    def test_exit_key_is_optional(self):
+        self.assertIsNone(self.t.exit_key)
+
+    def test_exit_key_is_emittable(self):
+        t = Translator(dict(KEYMAP, exit_key='KEY_ESC'))
+        self.assertEqual(t.exit_key, e.KEY_ESC)
+        self.assertIn(e.KEY_ESC, t.output_keys())
+
+
 if __name__ == '__main__':
     unittest.main()

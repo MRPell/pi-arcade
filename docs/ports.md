@@ -27,6 +27,28 @@ A free, open-source brick breaker (Debian package `lbreakout2`). It starts fulls
 
 ---
 
+## Space Cadet Pinball
+
+[SpaceCadetPinball](https://github.com/k4zmu2a/SpaceCadetPinball) is an open-source rebuild of the Space Cadet table from *Full Tilt! Pinball*. `scripts/install.sh` builds it from source (pinned commit, about 20 minutes on a Pi 3B) into `/home/pi/SpaceCadetPinball/bin/`.
+
+**Game data is not included.** Copy the data files from your own copy of the game into `/home/pi/.local/share/SpaceCadetPinball/`:
+
+- Full Tilt! Pinball (preferred, higher resolution): `CADET.DAT` plus its `SOUND/` folder
+- Or Windows XP's 3D Pinball: `PINBALL.DAT`, the `*.WAV` files and `PINBALL.MID`
+
+It starts fullscreen with the menu bar hidden, from a seeded `imgui_pb.ini` that's only written if one doesn't exist yet. Coin + Start sends the game's own Exit key, so high scores are saved.
+
+| Physical input | Space Cadet Pinball |
+|----------------|---------------------|
+| BTN 4 (or BTN 1) | Left flipper |
+| BTN 6 (or BTN 3) | Right flipper |
+| BTN 5, BTN 2 or joystick down | Plunger (hold to pull, release to launch) |
+| Joystick left / right / up | Nudge the table left / right / up |
+| Start | New game (F2) |
+| Coin | Pause (F3) |
+
+---
+
 ## Adding a port
 
 1. Install the game's binary in `scripts/install.sh`.

@@ -1,0 +1,21 @@
+{
+  "_comment": "Space Cadet Pinball's default keys. Flippers on the bottom-corner buttons (BTN 4 / BTN 6), duplicated on the top corners (BTN 1 / BTN 3); plunger on BTN 5, BTN 2 and joystick down; table nudges on the joystick. Esc is the game's own Exit, so Coin + Start quits cleanly and keeps high scores.",
+  "buttons": {
+    "BTN_WEST": "KEY_Z",
+    "BTN_SOUTH": "KEY_Z",
+    "BTN_TR": "KEY_SLASH",
+    "BTN_NORTH": "KEY_SLASH",
+    "BTN_TL": "KEY_SPACE",
+    "BTN_EAST": "KEY_SPACE",
+    "BTN_START": "KEY_F2",
+    "BTN_SELECT": "KEY_F3"
+  },
+  "axes": {
+    "left": "KEY_X",
+    "right": "KEY_DOT",
+    "up": "KEY_UP",
+    "down": "KEY_SPACE"
+  },
+  "exit_chord": ["BTN_SELECT", "BTN_START"],
+  "exit_key": "KEY_ESC"
+}
