@@ -25,8 +25,8 @@ the owner's computer (M-3). The high-score screen comes in a later milestone.
 Turn it on or off from the admin on your computer (below). The cabinet reads it
 each time EmulationStation quits, both ways, so a change takes effect at the
 next quit with no restart: turned on, the next quit goes to sign-in; turned
-off, the next quit brings EmulationStation back with no sign-in, and quitting
-that drops to the console as before. Mid-session nothing changes.
+off, the next quit drops to the console, as quitting did before profiles.
+Mid-session nothing changes.
 
 ## Profiles and combos
 
@@ -131,6 +131,9 @@ cabinet's controls have no way to change any of this. Deploy this version to
 the Pi first (`make deploy`).
 
 - Combos: the sign-in screen picks up a change while it is showing.
+- Removing a player signs them out at once: on the welcome screen they are back
+  at sign-in, at the game list their next game is refused ("Profile removed"),
+  and a game they are playing is stopped within 15 seconds.
 - Hours and time limits: the next game, and a running game within 15 seconds.
 - The flag: the next time EmulationStation quits.
 

@@ -91,10 +91,8 @@ class CabinetSim:
         """What arcade-session.sh does when EmulationStation quits: the flag is read again."""
         if self.enforce_setting():
             self._start_signin()
-        elif self.enforced:
-            self.enforced = False      # turned off: EmulationStation as before profiles
-            self.view = 'menu'
         else:
+            self.enforced = False      # turned off: to the console, as before profiles
             self.view = 'shell'
 
     def _profile(self):
@@ -129,7 +127,10 @@ class CabinetSim:
     def tick(self):
         mono = self.clock.mono()
         if self.view in ('signin', 'welcome'):
-            self.signin.update_profiles(self.profiles)
+            self.signin.update_profiles(self.profiles, mono)
+            if self.view == 'welcome' and self.signin.signed_in is None:
+                clear_session(self.state_dir)      # the owner removed this profile
+                self.view = 'signin'
             self.signin.tick(mono)
         elif self.view == 'game' and self.enforced:
             play.refresh_limit(self.profiles, self.ledger, self.clock.wall(), mono)
@@ -171,9 +172,7 @@ class CabinetSim:
         if self.enforced:
             profile = self._profile()
             if profile is None:
-                self._notice({'view': 'refused', 'title': 'Nobody is signed in',
-                              'lines': ['Quit EmulationStation (Start, Quit) to sign in.',
-                                        '', 'The game did not start.', 'Press any button']})
+                self._notice(play.not_signed_in_screen(read_session(self.state_dir)))
                 return
             wall = self.clock.wall()
             self.ledger.recover(self.boot_id)
@@ -195,7 +194,9 @@ class CabinetSim:
             return
         ended = self.ledger.finish(self.clock.mono())
         profile = ended and next((p for p in self.profiles if p.id == ended['profile']), None)
-        if profile is not None and ended['ended'] == 'time':
+        if ended and ended['ended'] == 'time' and profile is None:
+            self._notice(play.removed_screen(read_session(self.state_dir)))
+        elif profile is not None and ended['ended'] == 'time':
             self._notice(play.timeup_screen(self.profiles, profile, self.ledger,
                                             self.clock.wall(), self.clock.synced))
 

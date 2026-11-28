@@ -32,13 +32,21 @@ class SignIn:
         self.signed_in = None
         self.done = False
 
-    def update_profiles(self, profiles):
+    def update_profiles(self, profiles, now):
         """The owner changed the profiles from their computer: match against
-        the new combos from now on. A half-entered combo starts again."""
+        the new combos from now on. A half-entered combo starts again, and a
+        profile signed in but now removed is signed out."""
         profiles = list(profiles)
         if profiles == self._profiles:
             return
         self._profiles = profiles
+        removed = self.signed_in
+        if removed is not None and not any(p.id == removed.id for p in profiles):
+            self.signed_in = None
+            self.done = False
+            self._status = []
+            self._message = "%s's profile was removed. Sign in again." % removed.name
+            self._message_until = now + self.MESSAGE_SECONDS
         if self.signed_in is None:
             self._entry = []
 

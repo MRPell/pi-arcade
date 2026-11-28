@@ -44,7 +44,10 @@ def main():
     try:
         while not signin.done:
             now = time.monotonic()
-            signin.update_profiles(watch.current())
+            was_signed_in = signin.signed_in
+            signin.update_profiles(watch.current(), now)
+            if was_signed_in is not None and signin.signed_in is None:
+                clear_session(directory)     # the owner removed this profile
             signin.tick(now)
             screen = signin.screen()
             if screen != shown:

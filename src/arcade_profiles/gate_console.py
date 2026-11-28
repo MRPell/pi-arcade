@@ -36,10 +36,7 @@ def start(runcommand_pid):
     session = read_session(directory)
     profile = next((p for p in profiles if session and p.id == session['profile']), None)
     if profile is None:
-        show_until_button({'view': 'refused', 'title': 'Nobody is signed in',
-                           'lines': ['Quit EmulationStation (Start, Quit) to sign in.',
-                                     '', 'The game did not start.', 'Press any button']},
-                          play.DISMISS_SECONDS, DISMISS_GRACE)
+        show_until_button(play.not_signed_in_screen(session), play.DISMISS_SECONDS, DISMISS_GRACE)
         return 1
 
     synced = play.network_time_synced()
@@ -141,6 +138,8 @@ def end():
         if ended['ended'] == 'time' and profile is not None:
             screen = play.timeup_screen(profiles, profile, ledger, time.time(),
                                         play.network_time_synced())
+        elif ended['ended'] == 'time':
+            screen = play.removed_screen(read_session(state_dir()))
     if screen:
         show_until_button(screen, play.DISMISS_SECONDS, DISMISS_GRACE)
     return 0

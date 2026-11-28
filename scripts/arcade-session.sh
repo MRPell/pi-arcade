@@ -35,15 +35,17 @@ enforce_on || plain_emulationstation "$@"
 [[ -f "$CONSOLE_FONT" ]] && setfont "$CONSOLE_FONT" 2>/dev/null
 
 while true; do
-  while enforce_on; do
-    # Retry rather than fall through to EmulationStation, so a sign-in failure
-    # never becomes a way round it. Turning the flag off ends the retries.
-    until PYTHONPATH="$REPO_DIR/src" python3 -m arcade_profiles.signin_console; do
-      echo "Sign-in failed; retrying. Logs: journalctl or this console." >&2
-      sleep 3
-      enforce_on || break 2
-    done
-    ARCADE_PROFILES_ENFORCED=1 emulationstation "$@"
+  # Retry rather than fall through to EmulationStation, so a sign-in failure
+  # never becomes a way round it. Turning the flag off ends the retries, and
+  # the cabinet plays as before profiles.
+  until PYTHONPATH="$REPO_DIR/src" python3 -m arcade_profiles.signin_console; do
+    echo "Sign-in failed; retrying. Logs: journalctl or this console." >&2
+    sleep 3
+    enforce_on || { plain_emulationstation "$@"; continue 2; }
   done
-  plain_emulationstation "$@"
+  ARCADE_PROFILES_ENFORCED=1 emulationstation "$@"
+  status=$?
+  # Turned off meanwhile: this quit goes to the console, as it would have
+  # before profiles.
+  enforce_on || exit "$status"
 done

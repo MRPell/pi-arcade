@@ -243,42 +243,81 @@ class ProfilesFromComputerTest(AdminTest):
         self.assertIn('owner', str(e.exception))
 
 
+    def remove(self, pid):
+        _, state = self.call('/api/cabinet')
+        profiles = copy.deepcopy(state['profiles'])
+        profiles['profiles'] = [p for p in profiles['profiles'] if p['id'] != pid]
+        status, state = self.call('/api/profiles', {'profiles': profiles})
+        self.assertEqual(status, 200, state)
+
+    def test_bg2_removed_on_the_welcome_screen_is_signed_out_at_once(self):
+        self.sign_in('john')
+        self.remove('john')
+        state = self.sim.state()
+        self.assertEqual(state['view'], 'signin')
+        self.assertIsNone(state['session'])
+        self.assertIn("John's profile was removed", state['screen']['message'])
+        self.tap('1')
+        self.assertEqual(self.sim.view, 'signin')
+        self.tap(*self.combo('theo'))
+        self.assertEqual(self.sim.view, 'welcome')
+
+    def test_bg2_removed_at_the_game_list_cannot_start_a_game(self):
+        self.sign_in('john')
+        self.tap('1')
+        self.remove('john')
+        state = self.play_from_menu()
+        self.assertEqual(state['view'], 'refused')
+        self.assertIn("John's profile was removed", self.text(state))
+
+    def test_bg2_removed_mid_game_stops_the_game(self):
+        self.sign_in('john')
+        self.play()
+        self.clock.advance(5 * 60)
+        self.sim.state()
+        self.remove('john')
+        state = self.sim.state()
+        self.assertEqual(state['view'], 'timeup')
+        self.assertIn("John's profile was removed", self.text(state))
+        self.assertEqual(self.play_from_menu()['view'], 'refused')
+
+    def play_from_menu(self):
+        self.sim.view = 'menu'
+        self.tap('1')
+        return self.sim.state()
+
+
 class FlagFromComputerTest(AdminTest):
-    def test_turning_enforcement_off_applies_when_emulationstation_quits(self):
+    def exit_game(self):
+        self.sim.feed('coin', True)
+        self.tap('start')
+        self.sim.feed('coin', False)
+
+    def test_turning_enforcement_off_the_next_quit_goes_to_the_console(self):
+        # BG-1: one quit after Turn off reaches the console, as before profiles.
         self.sign_in('theo')
         self.tap('1')
         status, state = self.call('/api/enforce', {'enforce': False})
         self.assertEqual(status, 200, state)
         self.assertFalse(state['enforce'])
-        # Mid-session nothing changes (MH-4): Theo's game is still counted.
+        # Mid-session nothing changes (MH-4): Theo's game is still checked and counted.
         self.assertEqual(self.sim.view, 'menu')
         self.tap('1')
         self.assertEqual(self.sim.view, 'game')
-        self.sim.feed('coin', True)
-        self.tap('start')
-        self.sim.feed('coin', False)
+        self.clock.advance(10 * 60)
+        self.exit_game()
+        theo = next(u for u in self.sim.state()['usage'] if u['id'] == 'theo')
+        self.assertEqual(theo['used'], 10 * 60)
         self.quit_es()
-        # No restart: EmulationStation comes back as before profiles.
-        self.assertEqual(self.sim.view, 'menu')
+        self.assertEqual(self.sim.view, 'shell')
         self.assertFalse(self.sim.state()['enforced'])
-        self.clock.set_wall(dt.datetime(2026, 11, 28, 2, 0).timestamp())   # 2 am
-        self.tap('1')
-        self.assertEqual(self.sim.view, 'game')                          # no checks
-        self.sim.feed('coin', True)
-        self.tap('start')
-        self.sim.feed('coin', False)
-        self.quit_es()
-        self.assertEqual(self.sim.view, 'shell')                         # quits to the console, as before
 
-    def test_turning_it_back_on_applies_at_the_next_quit(self):
-        self.call('/api/enforce', {'enforce': False})
+    def test_off_then_on_again_before_the_quit_stays_under_profiles(self):
         self.sign_in('matt')
         self.tap('1')
-        self.quit_es()
-        self.assertEqual(self.sim.view, 'menu')
+        self.call('/api/enforce', {'enforce': False})
         status, state = self.call('/api/enforce', {'enforce': True})
         self.assertTrue(state['enforce'])
-        self.assertEqual(self.sim.view, 'menu')
         self.quit_es()
         self.assertEqual(self.sim.view, 'signin')
 

@@ -120,10 +120,10 @@ class RefreshLimitTest(unittest.TestCase):
         next(p for p in raw['profiles'] if p['id'] == 'theo')['limits']['hours']['weekdays'] = '15:00-16:30'
         self.assertEqual(self.limit(raw, 600), 30 * 60)
 
-    def test_profile_removed_keeps_its_limit(self):
+    def test_profile_removed_stops_now_and_keeps_the_time_played(self):
         raw = copy.deepcopy(SHIPPED)
         raw['profiles'] = [p for p in raw['profiles'] if p['id'] != 'theo']
-        self.assertEqual(self.limit(raw, 600), 3600.0)
+        self.assertEqual(self.limit(raw, 600), 600)
 
 
 if __name__ == '__main__':

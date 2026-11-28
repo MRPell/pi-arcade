@@ -46,23 +46,24 @@ def refresh_limit(profiles, ledger, wall, mono):
     """Hold the running game to its profile's hours and time as they are now,
     so a change the owner makes mid-game applies to it (M-3). A limit lowered
     below what was already played stops the game at once, and that time still
-    counts. A profile no longer there keeps the limit it started with."""
+    counts. A profile the owner removed stops its game at once."""
     o = ledger.open
     if not o:
         return
     profile = next((p for p in profiles if p.id == o['profile']), None)
+    elapsed = max(0.0, mono - o['start_mono'])
+    # Time already played under the limit it had counts, even if the new one is lower.
+    played = elapsed if o['limit'] is None else min(elapsed, o['limit'])
     if profile is None:
+        o['limit'] = played
         return
     if profile.role == 'owner':
         o['limit'] = None
         return
-    elapsed = max(0.0, mono - o['start_mono'])
     start = dt.datetime.fromtimestamp(o['start'])
     by_time = remaining_seconds(profile, start, ledger.data['plays'], ledger.since)
     window = window_at(profile.limits, dt.datetime.fromtimestamp(wall))
     by_hours = elapsed if window is None else elapsed + window[1].timestamp() - wall
-    # Time already played under the limit it had counts, even if the new one is lower.
-    played = elapsed if o['limit'] is None else min(elapsed, o['limit'])
     o['limit'] = max(played, min(by_time, by_hours))
 
 
@@ -136,6 +137,29 @@ def reason_lines(owner_name, decision, now):
         return ["%s's time for %s is used up," % (b.name, period_text(b.limits)),
                 'so no one can play as %s now' % p.name, _next(decision, now)]
     raise ValueError(decision.reason)
+
+
+def _removed_line(session):
+    name = (session or {}).get('name') or 'This'
+    return "%s's profile was removed by the owner." % name
+
+
+def not_signed_in_screen(session):
+    """A game start with no profile signed in, or one the owner has removed."""
+    if session:
+        title, lines = 'Profile removed', [_removed_line(session)]
+    else:
+        title, lines = 'Nobody is signed in', []
+    return {'view': 'refused', 'title': title,
+            'lines': lines + ['Quit EmulationStation (Start, Quit) to sign in.',
+                              '', 'The game did not start.', 'Press any button']}
+
+
+def removed_screen(session):
+    """Shown when a game was stopped because the owner removed its profile."""
+    return {'view': 'timeup', 'title': 'Profile removed',
+            'lines': [_removed_line(session), 'Quit EmulationStation (Start, Quit) to sign in.',
+                      '', 'The game was stopped.', 'Press any button']}
 
 
 TITLES = {'clock': 'Only the owner can play now', 'hours': 'Not play time',

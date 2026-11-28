@@ -103,5 +103,45 @@ class ArcadeSessionFlagChangeTest(unittest.TestCase):
             self.assertEqual(f.read().splitlines(), ['es enforced=0', 'es enforced=0'])
 
 
+class ArcadeSessionTurnedOffTest(unittest.TestCase):
+    """BG-1: flag on, the owner turns it off while EmulationStation runs, and
+    the next quit goes to the console, as before profiles: one quit, not two."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.tmp)
+        self.state = os.path.join(self.tmp, 'state')
+        os.mkdir(self.state)
+        with open(os.path.join(self.state, 'cabinet.json'), 'w') as f:
+            json.dump({'arcade-profiles.enforce': True}, f)
+        # The cabinet's code, with a sign-in that succeeds at once (no pad here).
+        repo = os.path.join(self.tmp, 'repo')
+        shutil.copytree(os.path.join(REPO, 'src'), os.path.join(repo, 'src'))
+        shutil.copytree(os.path.join(REPO, 'config'), os.path.join(repo, 'config'))
+        with open(os.path.join(repo, 'src', 'arcade_profiles', 'signin_console.py'), 'w') as f:
+            f.write('import sys\nsys.exit(0)\n')
+        bindir = os.path.join(self.tmp, 'bin')
+        os.mkdir(bindir)
+        self.calls = os.path.join(self.tmp, 'calls')
+        fake_es = os.path.join(bindir, 'emulationstation')
+        with open(fake_es, 'w') as f:
+            f.write('#!/bin/bash\n'
+                    'echo "es enforced=${ARCADE_PROFILES_ENFORCED:-0}" >> "%s"\n'
+                    'echo \'{"arcade-profiles.enforce": false}\' > "%s/cabinet.json"\n'
+                    'exit 7\n' % (self.calls, self.state))
+        os.chmod(fake_es, os.stat(fake_es).st_mode | stat.S_IEXEC)
+        self.env = dict(os.environ, PATH=bindir + os.pathsep + os.environ['PATH'],
+                        PI_ARCADE_DIR=repo, PI_ARCADE_STATE_DIR=self.state,
+                        PI_ARCADE_CABINET_CONFIG=os.path.join(repo, 'config', 'cabinet.json'))
+        self.env.pop('ARCADE_PROFILES_ENFORCED', None)
+
+    def test_turned_off_while_running_the_next_quit_goes_to_the_console(self):
+        result = subprocess.run(['bash', SCRIPT], env=self.env, timeout=20,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertEqual(result.returncode, 7, result.stderr.decode())
+        with open(self.calls) as f:
+            self.assertEqual(f.read().splitlines(), ['es enforced=1'])
+
+
 if __name__ == '__main__':
     unittest.main()
