@@ -1,5 +1,5 @@
-"""The cabinet's settings: the arcade-profiles.enforce flag and the profiles
-(combos, hours, time limits).
+"""The cabinet's settings: the arcade-profiles.enforce flag, the profiles
+(combos, hours, time limits) and who holds each high score.
 
 The owner changes them from their computer (admin/, `make admin`), which
 writes them here, into the cabinet's state directory, through this module's
@@ -8,11 +8,13 @@ and config/profiles.json. They live outside the repo copy so `make deploy`
 never undoes the owner's changes. Nothing at the cabinet writes them.
 
     python3 -m arcade_profiles.settings show
-        Print {"enforce": bool, "profiles": {...}, "from_admin": bool} as JSON.
+        Print {"enforce": bool, "profiles": {...}, "from_admin": bool,
+        "scores": [{"game", "title", "score", "holder", "holder_name"}]} as JSON.
     python3 -m arcade_profiles.settings write < CHANGE_JSON
-        CHANGE_JSON is {"enforce": bool} and/or {"profiles": {...}}. Profiles
-        are checked first; a bad change writes nothing. Prints what `show`
-        prints, or {"error": "..."} and exits 1.
+        CHANGE_JSON is any of {"enforce": bool}, {"profiles": {...}} and
+        {"scores": {"<game>": "<profile id>" or null}} (who holds a high
+        score). It is checked first; a bad change writes nothing. Prints what
+        `show` prints, or {"error": "..."} and exits 1.
 """
 
 import json
@@ -76,10 +78,12 @@ def check_profiles(raw):
 
 
 def show(directory=None, default=None):
+    from . import scores
     directory = directory or state_dir()
     return {'enforce': enforce_on(directory, default),
             'profiles': load_raw_profiles(directory),
-            'from_admin': any(os.path.exists(os.path.join(directory, n)) for n in (CABINET, PROFILES))}
+            'from_admin': any(os.path.exists(os.path.join(directory, n)) for n in (CABINET, PROFILES)),
+            'scores': scores.rows(directory, load_profiles(directory))}
 
 
 def _write_json(path, data):
@@ -91,13 +95,19 @@ def _write_json(path, data):
 
 
 def write(change, directory=None):
+    from . import scores
     directory = directory or state_dir()
-    if not isinstance(change, dict) or not change or set(change) - {'enforce', 'profiles'}:
-        raise SettingsError('a change is {"enforce": true|false} and/or {"profiles": {...}}')
+    if not isinstance(change, dict) or not change or set(change) - {'enforce', 'profiles', 'scores'}:
+        raise SettingsError('a change is any of {"enforce": true|false}, {"profiles": {...}} '
+                            'and {"scores": {...}}')
     if 'enforce' in change and not isinstance(change['enforce'], bool):
         raise SettingsError('enforce must be true or false')
-    if 'profiles' in change:
-        check_profiles(change['profiles'])
+    profiles = check_profiles(change['profiles']) if 'profiles' in change else None
+    if 'scores' in change:
+        try:
+            scores.assign(directory, change['scores'], profiles or load_profiles(directory))
+        except scores.ScoreError as e:
+            raise SettingsError(str(e))
     os.makedirs(directory, exist_ok=True)
     if 'profiles' in change:
         _write_json(os.path.join(directory, PROFILES), change['profiles'])
