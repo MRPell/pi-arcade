@@ -75,6 +75,11 @@ def decode(game, data):
     return sum(d * 10 ** i for i, d in enumerate(digits))
 
 
+def max_score(game):
+    """The highest score the game's save can hold."""
+    return 10 ** (game.length * (2 if game.encoding == 'bcd-le' else 1)) - 1
+
+
 def encode(game, score, data=b''):
     """data (a hiscore save, padded as needed) with its top score set to score:
     what the game writes. Used by the simulator's stand-in games."""

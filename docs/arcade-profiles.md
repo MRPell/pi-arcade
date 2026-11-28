@@ -204,7 +204,8 @@ than a game already played makes the clock untrusted (only the owner plays),
 as on the cabinet; **Clear play record and power-cycle** starts over.
 
 The stand-in games score points (Button 1: 100, Button 2: 1,000) for Pac-Man,
-Galaga, Donkey Kong and Space Invaders, and on exit save a new top score to
+Galaga, Donkey Kong and Space Invaders, up to the most each game's save holds
+(9,999 for Space Invaders), and on exit save a new top score to
 `hi/` in the simulator's cabinet the way mame2003-plus does; the real
 high-score code reads it from there. The side panel lists the high scores and
 who holds each. Each start of `make sim` clears them.

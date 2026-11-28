@@ -277,7 +277,11 @@ class CabinetSim:
             return
         if pressed:
             self.game_log = (self.game_log + [name])[-GAME_LOG:]
-            self.game_score += POINTS.get(name, 0) if self.game_rom else 0
+            game = self.games.get(self.game_rom)
+            if game is not None:
+                # A real game's score display has only so many digits; the
+                # stand-in stops at the most its save can hold.
+                self.game_score = min(self.game_score + POINTS.get(name, 0), scores.max_score(game))
 
     def _on_shell(self, name, pressed):
         pass

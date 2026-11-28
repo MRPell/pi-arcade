@@ -227,6 +227,27 @@ class SimScoresTest(unittest.TestCase):
         self.tap(*combo)
         self.assertEqual(self.sim.view, 'welcome')
 
+    def to_game_list(self):
+        if self.sim.view == 'signin':
+            self.sign_in('theo')
+        self.assertEqual(self.sim.view, 'menu')
+
+    def saved(self, rom):
+        with open(os.path.join(self.dir, 'hi', GAMES[rom].file), 'rb') as f:
+            return scores.decode(GAMES[rom], f.read())
+
+    def test_bg1_a_score_past_what_the_game_can_save_stops_at_its_top_and_exits(self):
+        self.to_game_list()
+        self.play('Space Invaders', *['2'] * 19)     # 19,000 asked of a 4-digit game; play() checks the exit
+        self.assertEqual(self.saved('invaders'), 9999)
+
+    def test_bg1_the_game_shows_the_score_it_will_save(self):
+        self.to_game_list()
+        while TITLES[self.sim.cursor] != 'Space Invaders':
+            self.tap('down')
+        self.tap('1', *['2'] * 12)
+        self.assertEqual(self.sim.state()['game']['score'], 9999)
+
     def test_a_beaten_score_moves_to_the_new_holder_and_a_lower_one_does_not(self):
         self.setup_scores()
         self.sign_in('john')
