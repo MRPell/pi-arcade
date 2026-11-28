@@ -1,4 +1,4 @@
-PI_HOST ?= pi@raspberrypi.local
+PI_HOST ?= pi@retropie.local
 PI_DIR  ?= /home/pi/pi-arcade
 
 # Push project files to the Pi
@@ -37,6 +37,17 @@ status:
 test:
 	python3 -m unittest discover -s tests -p 'test_[!k]*.py'
 
+# Run every test on the Pi's own Python (3.7) from a throwaway copy in /tmp;
+# the cabinet's install is untouched
+PI_TEST_DIR ?= /tmp/pi-arcade-test
+test-pi:
+	rsync -a --delete --exclude .git --exclude roms --exclude '.sim-*' --exclude __pycache__ ./ $(PI_HOST):$(PI_TEST_DIR)/
+	ssh $(PI_HOST) "cd $(PI_TEST_DIR) && python3 -m unittest discover -s tests -p 'test_*.py'; s=\$$?; rm -rf $(PI_TEST_DIR); exit \$$s"
+
+# Is the cabinet ready for arcade-profiles.enforce to go on? Read-only.
+preflight:
+	PI_HOST=$(PI_HOST) PI_DIR=$(PI_DIR) bash scripts/preflight.sh
+
 # Cabinet simulator in the browser, arcade-profiles.enforce on (dev). Its
 # cabinet's settings live in SIM_DIR, where make admin-sim changes them.
 PORT ?= 21000
@@ -58,4 +69,4 @@ admin:
 admin-sim:
 	python3 -m admin.server --port $(ADMIN_PORT) --sim-dir $(SIM_DIR)
 
-.PHONY: test sim sim-flag-off admin admin-sim deploy install deploy-install ssh logs restart-daemon gpio-test status
+.PHONY: test test-pi preflight sim sim-flag-off admin admin-sim deploy install deploy-install ssh logs restart-daemon gpio-test status
