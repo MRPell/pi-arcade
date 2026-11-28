@@ -73,6 +73,10 @@
                       padding: 4px 9px; cursor: pointer; font: inherit; }
   aside #usage td { font-variant-numeric: tabular-nums; }
   .screen.notice .title { color: var(--warn); }
+  .screen.scores .title { color: var(--accent); letter-spacing: .12em; text-transform: uppercase; }
+  .screen.scores .game-title { font-size: 1.3em; font-weight: 700; }
+  .screen.scores .score { font-size: 2.4em; font-weight: 700; letter-spacing: .06em; margin: .15em 0; }
+  .screen.scores .holder { color: var(--warn); font-size: 1.15em; margin-bottom: .6em; }
 </style>
 </head>
 <body>
@@ -130,6 +134,9 @@
     <table id="usage"><tr><td>?</td></tr></table>
     <p>Setting the clock earlier than a game already played makes it untrusted (only the owner plays), as on the cabinet. To start over, clear the record.</p>
     <div class="row"><button type="button" id="reset-usage">Clear play record and power-cycle</button></div>
+    <h2>High scores (scores.json)</h2>
+    <table id="scores"><tr><td>?</td></tr></table>
+    <p>The stand-in games save a new top score when they exit, as MAME does; the cabinet credits it to whoever was signed in. Leave the sign-in screen for 30 s to see the high scores rotate.</p>
     <h2>Keyboard</h2>
     <table>
       <tr><td>Joystick</td><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd></td></tr>
@@ -183,6 +190,12 @@
       screenEl.classList.add('notice');
       screenEl.append(el('div', 'title', s.screen.title));
       s.screen.lines.forEach(function (line) { screenEl.append(el('div', 'line', line)); });
+    } else if (s.view === 'scores') {
+      screenEl.classList.add('scores');
+      var l = s.screen.lines;
+      screenEl.append(el('div', 'title', s.screen.title), el('div', 'game-title', l[0]),
+                      el('div', 'score', l[1]), el('div', 'holder', l[2]));
+      l.slice(3).forEach(function (line) { screenEl.append(el('div', 'line', line)); });
     } else if (s.view === 'signin' || s.view === 'welcome') {
       var sc = s.screen;
       screenEl.append(el('div', 'title', sc.title));
@@ -212,6 +225,10 @@
       screenEl.append(el('div', 'title', s.game.title));
       screenEl.append(el('div', 'line', 'Game running. Coin + Start exits.'));
       screenEl.append(el('div', 'line', 'Game received: ' + (s.game.log.join(' ') || '-')));
+      if (s.game.score != null) {
+        screenEl.append(el('div', 'line strong', 'Score: ' + s.game.score.toLocaleString('en-US')));
+        screenEl.append(el('div', 'line', 'Button 1: +100   Button 2: +1,000'));
+      }
     } else if (s.view === 'shell') {
       screenEl.classList.add('shell');
       screenEl.append(el('div', null, 'EmulationStation exited.'));
@@ -232,6 +249,18 @@
                   el('td', null, mins(u.used) + ' used ' + u.period + ', ' +
                      (u.left == null ? 'no limit' : mins(u.left) + ' left')));
         usage.append(tr);
+      });
+    }
+    var board = document.getElementById('scores');
+    board.replaceChildren();
+    if (!s.scores.length) {
+      var r1 = el('tr'); r1.append(el('td', null, 'None yet')); board.append(r1);
+    } else {
+      s.scores.forEach(function (r) {
+        var tr = el('tr');
+        tr.append(el('td', null, r.title),
+                  el('td', null, r.score.toLocaleString('en-US') + ', ' + (r.holder_name || 'no profile')));
+        board.append(tr);
       });
     }
     document.getElementById('flag').textContent = s.enforce ? 'on' : 'off';

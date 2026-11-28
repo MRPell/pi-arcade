@@ -81,6 +81,12 @@
   .msg-err { color: var(--err); background: var(--err-bg); border-radius: 8px; padding: 8px 12px; }
   .msg-ok { color: var(--ok); }
   .dirty { color: var(--warn); font-weight: 600; }
+  table.scores { border-collapse: collapse; width: 100%; }
+  table.scores th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+                    color: var(--muted); font-weight: 600; padding: 0 10px 8px 0; }
+  table.scores td { padding: 8px 10px 8px 0; border-top: 1px solid var(--line); }
+  table.scores td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  #score-note:not(:empty) { margin-top: 10px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -112,6 +118,19 @@
       <input id="new-name" placeholder="Name" maxlength="20">
       <button type="button" id="add-btn">Add</button>
     </div>
+
+    <h2>High scores</h2>
+    <p class="muted small">Each game&rsquo;s top score on the cabinet and the profile it is credited to. A new
+      top score goes to whoever was signed in when it was set; one set while enforcement was off has no profile.
+      Change who holds it here; it saves to the cabinet at once, and the cabinet&rsquo;s idle high-score screen
+      shows the change on its next turn.</p>
+    <div class="card" id="scores-card">
+      <table class="scores"><thead><tr><th>Game</th><th>Score</th><th>Held by</th></tr></thead>
+        <tbody id="scores"></tbody></table>
+      <p class="muted small" id="no-scores" hidden>No high scores on the cabinet yet. They appear after a game
+        with a saved high score is played with enforcement on.</p>
+      <div id="score-note" role="status" aria-live="polite"></div>
+    </div>
   </section>
 </div>
 
@@ -135,6 +154,8 @@
   var ROLE = { owner: 'Owner', player: 'Player', guest: 'Guest' };
 
   var saved = null;   // the cabinet's profiles file as last read or saved
+  var scores = [];    // the cabinet's high scores and who holds each
+  var scoreNote = null;
   var draft = null;   // the owner's edits, same shape
   var enforce = null;
   var busy = false;
@@ -165,6 +186,7 @@
     $('target').textContent = state.target;
     enforce = state.enforce;
     saved = state.profiles;
+    scores = state.scores || [];
     if (!keepDraft) draft = copy(saved);
     $('load-error').hidden = true;
     $('main').hidden = false;
@@ -173,7 +195,7 @@
 
   function load() {
     busy = true; render();
-    api('GET', '/api/cabinet').then(function (s) { note = null; took(s); },
+    api('GET', '/api/cabinet').then(function (s) { note = null; scoreNote = null; took(s); },
       function (e) { $('load-error').textContent = e.message; $('load-error').hidden = false; })
       .then(function () { busy = false; render(); });
   }
@@ -324,6 +346,36 @@
     return message;
   }
 
+  function renderScores() {
+    var body = $('scores');
+    body.replaceChildren();
+    $('no-scores').hidden = scores.length > 0;
+    body.parentNode.hidden = !scores.length;
+    var owners = saved ? saved.profiles : [];
+    scores.forEach(function (r) {
+      var sel = el('select', { 'aria-label': 'Who holds the ' + r.title + ' high score', disabled: busy,
+        onchange: function (ev) {
+          var holder = ev.target.value || null;
+          busy = true; scoreNote = null; render();
+          api('POST', '/api/scores', { game: r.game, holder: holder }).then(function (s) {
+            took(s, true);
+            var now = scores.find(function (x) { return x.game === r.game; });
+            scoreNote = { kind: 'ok', text: r.title + ': the high score is now held by '
+              + ((now && now.holder_name) || 'no profile') + '.' };
+          }, function (e) { scoreNote = { kind: 'err', text: friendly(e.message) }; })
+            .then(function () { busy = false; render(); });
+        } }, [el('option', { value: '', text: 'No profile', selected: !r.holder })]
+        .concat(owners.map(function (p) {
+          return el('option', { value: p.id, text: p.name, selected: p.id === r.holder });
+        })));
+      body.append(el('tr', { 'data-game': r.game }, [el('td', { text: r.title }),
+        el('td', { class: 'num', text: r.score.toLocaleString('en-US') }), el('td', {}, [sel])]));
+    });
+    var n = $('score-note');
+    n.replaceChildren();
+    if (scoreNote) n.append(el('div', { class: scoreNote.kind === 'err' ? 'msg-err' : 'msg-ok', text: scoreNote.text }));
+  }
+
   function renderBar() {
     var status = $('status');
     status.replaceChildren();
@@ -356,6 +408,7 @@
         if (again && again.tagName !== 'BUTTON') again.focus();
       }
     }
+    renderScores();
     renderBar();
   }
 

@@ -1,7 +1,7 @@
 """Arcade profiles admin, run on the owner's computer (make admin).
 
-Changes the cabinet's profiles (names, combos, hours, time limits) and turns
-arcade-profiles.enforce on and off. It talks to the cabinet over SSH, running
+Changes the cabinet's profiles (names, combos, hours, time limits) and who
+holds each high score, and turns arcade-profiles.enforce on and off. It talks to the cabinet over SSH, running
 `python3 -m arcade_profiles.settings` there, so only a computer holding the
 cabinet's SSH key can change anything, and it listens on 127.0.0.1 only.
 `--sim-dir` points it at the simulator's cabinet instead (make admin-sim).
@@ -11,9 +11,10 @@ Usage (from the repo root):
     python3 -m admin.server --sim-dir .sim-cabinet [--port 21010]
 
 GET  /               the admin page
-GET  /api/cabinet    {"target", "enforce", "profiles", "from_admin"} as the cabinet has them
+GET  /api/cabinet    {"target", "enforce", "profiles", "from_admin", "scores"} as the cabinet has them
 POST /api/profiles   {"profiles": {...}}: checked here, then written to the cabinet
 POST /api/enforce    {"enforce": true|false}
+POST /api/scores     {"game": "<rom>", "holder": "<profile id>" or null}: who holds that high score
 """
 
 import argparse
@@ -144,6 +145,13 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(enforce, bool):
                 return self._json({'error': 'enforce must be true or false'}, 400)
             self._cabinet(lambda: cabinet.write({'enforce': enforce}))
+        elif self.path == '/api/scores':
+            body = body or {}
+            game, holder = body.get('game'), body.get('holder')
+            if not isinstance(game, str) or not (holder is None or isinstance(holder, str)):
+                return self._json({'error': 'a score change is {"game": "<game>", '
+                                            '"holder": "<profile id>" or null}'}, 400)
+            self._cabinet(lambda: cabinet.write({'scores': {game: holder}}))
         else:
             self._json({'error': 'not found'}, 404)
 

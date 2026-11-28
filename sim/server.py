@@ -12,7 +12,8 @@ POST /api/reset-usage  simulator only: forget every play recorded, then power-cy
 The cabinet's settings (the flag and the profiles) live in --state-dir, as on
 the Pi. Each start of the simulator writes them fresh from --cabinet and
 --profiles and forgets every play; from then on the admin (make admin-sim)
-changes them there, and a power-cycle keeps them.
+changes them there, and a power-cycle keeps them. The stand-in games' hiscore
+saves (hi/) and the high-score holders (scores.json) live there too.
 POST /api/clock   simulator only: {"set": "YYYY-MM-DDTHH:MM"} sets the wall
                   clock, {"advance": seconds} lets time pass, {"synced": bool}
                   says whether network time has set the clock
@@ -22,6 +23,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import shutil
 import sys
 import tempfile
 import threading
@@ -119,12 +121,14 @@ class Handler(BaseHTTPRequestHandler):
 
 def fresh_cabinet(state_dir, cabinet_config, profiles_path):
     """The simulated cabinet's disk at the start of a run: the given flag and
-    profiles as its settings, no one signed in and no play recorded."""
-    for name in ('usage.json', 'session.json'):
-        try:
-            os.remove(os.path.join(state_dir, name))
-        except FileNotFoundError:
-            pass
+    profiles as its settings, no one signed in, no play recorded and no high
+    scores."""
+    for name in ('usage.json', 'session.json', 'scores.json', 'hi'):
+        path = os.path.join(state_dir, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        elif os.path.exists(path):
+            os.remove(path)
     with open(profiles_path) as f:
         profiles = json.load(f)
     settings.write({'enforce': enforce_enabled(cabinet_config), 'profiles': profiles}, state_dir)

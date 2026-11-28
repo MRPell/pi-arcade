@@ -13,19 +13,28 @@ The flag and the profiles are read from the cabinet's settings in state_dir
 (arcade_profiles.settings), which the admin on the owner's computer writes
 (make admin-sim): the flag each time EmulationStation quits, the profiles on
 every screen, as on the cabinet.
+
+The stand-in games score points (Button 1: 100, Button 2: 1,000) and, like
+mame2003-plus, save a new top score to their hiscore file in state_dir/hi
+when they exit; the real high-score code (arcade_profiles.scores) reads it
+from there. An idle sign-in screen rotates through the high scores.
 """
 
 import datetime as dt
+import os
 import time
 import uuid
 
-from arcade_profiles import play
+from arcade_profiles import play, scores
 from arcade_profiles.session import clear_session, read_session, write_session
 from arcade_profiles.settings import ProfilesWatch, enforce_on
 from arcade_profiles.signin import SignIn
 from arcade_profiles.usage import Ledger
 
-GAMES = ['Galaga', 'Pac-Man', 'Donkey Kong', 'Frogger', 'Super Mario Bros.']
+# Title and the rom whose hiscore save it writes (config/hiscores.json); None keeps no score.
+GAMES = [('Galaga', 'galaga'), ('Pac-Man', 'pacman'), ('Donkey Kong', 'dkong'),
+         ('Space Invaders', 'invaders'), ('Super Mario Bros.', None)]
+POINTS = {'1': 100, '2': 1000}
 ES_MENU = ['Quit EmulationStation', 'Close menu']
 GAME_LOG = 8
 # A button pressed in the game as it is stopped must not also dismiss the screen.
@@ -62,6 +71,8 @@ class CabinetSim:
         self.clock = clock or SimClock()
         self.boot_id = uuid.uuid4().hex
         self._watch = ProfilesWatch(state_dir)
+        self.hi_dir = os.path.join(state_dir, 'hi')
+        self.games = scores.load_games()
         self.ledger = None
         self.boot()
 
@@ -79,6 +90,7 @@ class CabinetSim:
         self.menu_cursor = 0
         self.game = None
         self.game_log = []
+        self.game_score = 0
         self.held = set()
         self.notice = None
         if self.enforce_setting():
@@ -113,6 +125,7 @@ class CabinetSim:
         def describe(profile):
             return play.status_lines(self.profiles, self._check(profile), wall())
         self.signin = SignIn(self.profiles, self.clock.mono(), describe)
+        self.attract = scores.Attract(self.clock.mono())
         self.view = 'signin'
 
     def feed(self, name, pressed):
@@ -121,17 +134,26 @@ class CabinetSim:
         else:
             self.held.discard(name)
         self.tick()
+        if self.view == 'scores':
+            if pressed and self.attract.input(self.clock.mono()):
+                self.view = 'signin'         # woke from the high scores; the press does nothing else
+            return
+        if self.view == 'signin' and pressed:
+            self.attract.input(self.clock.mono())
         handler = getattr(self, '_on_' + self.view)
         handler(name, pressed)
 
     def tick(self):
         mono = self.clock.mono()
-        if self.view in ('signin', 'welcome'):
+        if self.view in ('signin', 'welcome', 'scores'):
             self.signin.update_profiles(self.profiles, mono)
             if self.view == 'welcome' and self.signin.signed_in is None:
                 clear_session(self.state_dir)      # the owner removed this profile
                 self.view = 'signin'
             self.signin.tick(mono)
+            if self.view != 'welcome':
+                idle = scores.signin_idle(self.signin.screen()) and bool(self._score_rows())
+                self.view = 'scores' if self.attract.tick(mono, idle) else 'signin'
         elif self.view == 'game' and self.enforced:
             play.refresh_limit(self.profiles, self.ledger, self.clock.wall(), mono)
             if self.ledger.heartbeat(mono):
@@ -162,14 +184,21 @@ class CabinetSim:
             step = -1 if name == 'up' else 1
             self.cursor = (self.cursor + step) % len(GAMES)
         elif name == '1':
-            self._launch(GAMES[self.cursor])
+            self._launch(*GAMES[self.cursor])
         elif name == 'start':
             self.menu_cursor = 0
             self.view = 'esmenu'
 
-    def _launch(self, title):
+    def _score_rows(self):
+        return scores.rows(self.state_dir, self.profiles, self.games)
+
+    def _sync_scores(self, holder):
+        scores.sync(self.state_dir, holder, self.clock.wall(), self.games, self.hi_dir)
+
+    def _launch(self, title, rom):
         """What runcommand-onstart.sh does on the cabinet, then the game."""
         if self.enforced:
+            self._sync_scores(None)
             profile = self._profile()
             if profile is None:
                 self._notice(play.not_signed_in_screen(read_session(self.state_dir)))
@@ -183,17 +212,37 @@ class CabinetSim:
             self.ledger.start(profile.id, wall, self.clock.mono(),
                               play.play_seconds(decision, wall), self.boot_id)
         self.game = title
+        self.game_rom = rom
         self.game_log = []
+        self.game_score = 0
         self.view = 'game'
 
+    def _save_hiscore(self):
+        """The game exiting: like mame2003-plus, it saves a new top score."""
+        game = self.games.get(self.game_rom)
+        if game is None or not self.game_score:
+            return
+        path = os.path.join(self.hi_dir, game.file)
+        try:
+            with open(path, 'rb') as f:
+                data = f.read()
+        except OSError:
+            data = b''
+        if self.game_score > (scores.decode(game, data) or 0):
+            os.makedirs(self.hi_dir, exist_ok=True)
+            with open(path, 'wb') as f:
+                f.write(scores.encode(game, self.game_score, data))
+
     def _end_game(self):
-        """What runcommand-onend.sh does on the cabinet."""
+        """The game exits, then what runcommand-onend.sh does on the cabinet."""
+        self._save_hiscore()
         self.game = None
         self.view = 'menu'
         if not self.enforced:
             return
         ended = self.ledger.finish(self.clock.mono())
         profile = ended and next((p for p in self.profiles if p.id == ended['profile']), None)
+        self._sync_scores(profile.id if profile else None)
         if ended and ended['ended'] == 'time' and profile is None:
             self._notice(play.removed_screen(read_session(self.state_dir)))
         elif profile is not None and ended['ended'] == 'time':
@@ -228,6 +277,7 @@ class CabinetSim:
             return
         if pressed:
             self.game_log = (self.game_log + [name])[-GAME_LOG:]
+            self.game_score += POINTS.get(name, 0) if self.game_rom else 0
 
     def _on_shell(self, name, pressed):
         pass
@@ -247,15 +297,19 @@ class CabinetSim:
                       'text': '%s, %s' % (now.strftime('%a %d %b %Y'), play.clock_time(now)),
                       'synced': self.clock.synced},
             'usage': play.usage_summary(self.profiles, self.ledger, wall) if self.ledger else None,
+            'scores': self._score_rows(),
         }
         if self.view in ('signin', 'welcome'):
             state['screen'] = self.signin.screen()
+        elif self.view == 'scores':
+            state['screen'] = self.attract.screen(self.clock.mono(), self._score_rows())
         elif self.view in ('refused', 'timeup'):
             state['screen'] = {k: self.notice[k] for k in ('view', 'title', 'lines')}
         elif self.view == 'menu':
-            state['menu'] = {'games': GAMES, 'cursor': self.cursor}
+            state['menu'] = {'games': [title for title, _ in GAMES], 'cursor': self.cursor}
         elif self.view == 'esmenu':
             state['esmenu'] = {'items': ES_MENU, 'cursor': self.menu_cursor}
         elif self.view == 'game':
-            state['game'] = {'title': self.game, 'log': self.game_log}
+            state['game'] = {'title': self.game, 'log': self.game_log,
+                             'score': self.game_score if self.game_rom else None}
         return state
