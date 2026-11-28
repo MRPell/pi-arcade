@@ -5,8 +5,9 @@ EmulationStation starts, and each profile can then start games only inside its
 play hours and while it has time left. It ships dark: nothing changes until the
 `arcade-profiles.enforce` flag is on.
 
-Built so far: sign-in (M-1), hours and time limits (M-2), and the admin on
-the owner's computer (M-3), and the high-score screen with score owners (M-4).
+Built: sign-in (M-1), hours and time limits (M-2), the admin on the owner's
+computer (M-3), the high-score screen with score owners (M-4), and the launch
+checks for turning it on at the real cabinet (M-5, see Launch below).
 
 ## The flag
 
@@ -114,21 +115,23 @@ Any button brings sign-in back; that press is not part of a combo. With no high
 scores yet, sign-in stays up. With the flag off there is no sign-in screen and
 so no high-score screen: the cabinet behaves as before.
 
-Where the scores come from: the games keep their own. mame2003-plus saves each
-game's high-score table to `/home/pi/RetroPie/BIOS/mame2003-plus/hi/<game>.hi`
-when the game exits, and `config/hiscores.json` says where the top score is in
-that file for Pac-Man, Galaga, Donkey Kong and Space Invaders (worked out from
-the core's `hiscore.dat`). Other games show no high score until they are added
-there. Before each game the cabinet reads the top scores; after it, a top score
-that changed is credited to the profile that just played. A top score that
-changed while the flag was off is noted with no profile, for the owner to give
-to someone in the admin. Who holds what is kept in
-`/home/pi/.pi-arcade/scores.json`.
+Where the scores come from: the games keep their own. The cabinet's MAME core
+(lr-mame2003, RetroPie's default for `mame-libretro`) saves each game's
+high-score table to `/home/pi/RetroPie/roms/mame-libretro/mame2003/hi/<game>.hi`
+when the game exits; a game switched to lr-mame2003-plus in the runcommand menu
+saves to `.../mame2003-plus/hi/` instead, and the cabinet reads whichever save
+was written last. `config/hiscores.json` says where the top score is in that
+file for Pac-Man, Galaga, Donkey Kong and Space Invaders; the positions were
+checked against the cabinet's own saves (copies in `tests/fixtures/mame2003-hi`).
+Other games show no high score until they are added there. Before each game the
+cabinet reads the top scores; after it, a top score that changed is credited to
+the profile that just played. A top score that changed while the flag was off
+(including every score already on the cabinet at launch) is noted with no
+profile at the first game start, for the owner to give to someone in the admin.
+Who holds what is kept in `/home/pi/.pi-arcade/scores.json`.
 
-Not yet checked on the cabinet: the byte positions in `config/hiscores.json`
-against real saves, that mame2003-plus has high-score saving on (it is the
-core's default), and that a game stopped because time ran out still saves its
-table.
+Not yet checked on the cabinet: that a game stopped because time ran out still
+saves its table.
 
 ## Admin, from the owner's computer
 
@@ -182,6 +185,42 @@ every game. They do nothing unless EmulationStation was started by
 with the flag off games launch exactly as before. If either file already exists
 and is not a link, the installer leaves it alone and warns.
 
+## Launch (M-5)
+
+Turning it on at the real cabinet. Steps 1–3 change nothing players see while
+the flag is off; step 4 is the switch.
+
+1. `make test-pi`: runs every test on the cabinet's own Python (3.7) from a
+   copy in `/tmp`, removed afterwards; the cabinet's install is untouched.
+2. `make deploy-install`: copies this checkout to the cabinet and hooks
+   arcade-session.sh and the game hooks in (above). With the flag off the
+   cabinet still plays as before.
+3. `make preflight`: changes nothing; checks the cabinet is ready and says what
+   to fix. Each line is `ok`, `FAIL` with what to do, or `info`:
+   - **cabinet / deployed**: reachable over SSH, and running this checkout.
+   - **autostart / game hooks**: what `make install` sets up.
+   - **controls**: the panel's pad is there, so players can sign in.
+   - **sign-in font**: the large console font for reading from across the room.
+   - **clock**: set from the network (until it is, only the owner can play).
+   - **time zone**: the cabinet's is this computer's. Play hours are the
+     cabinet's clock hours, so a cabinet on another time zone opens and closes
+     play at the wrong time. The fix it prints is
+     `sudo timedatectl set-timezone <yours>`, run on the cabinet (`make ssh`).
+   - **high scores**: the MAME saves it found and their top scores.
+   - **profiles / flag**: what the cabinet will use, and whether the flag is on.
+   Run it again until nothing fails.
+4. `make admin`, open http://127.0.0.1:21010 and turn **Profile enforcement**
+   on. At the cabinet, quit EmulationStation once (Start → Quit → Quit
+   EmulationStation): sign-in comes up and stays from then on, through reboots.
+5. Walk it at the cabinet: each player signs in with their combo and sees their
+   time left; a game outside the hours or with no time left is refused; Guest is
+   paused while a boy is out of time; a change in the admin reaches the screen
+   already up; the high-score screen comes up after 30 seconds idle; give the
+   launch-day scores (held by no profile) to their players in the admin.
+
+To switch it back off at any time: **Profile enforcement** off in the admin,
+then quit EmulationStation once; the cabinet plays as before profiles.
+
 ## Simulator
 
 `make sim`, then open http://127.0.0.1:21000. It runs the same sign-in and
@@ -206,6 +245,6 @@ as on the cabinet; **Clear play record and power-cycle** starts over.
 The stand-in games score points (Button 1: 100, Button 2: 1,000) for Pac-Man,
 Galaga, Donkey Kong and Space Invaders, up to the most each game's save holds
 (9,999 for Space Invaders), and on exit save a new top score to
-`hi/` in the simulator's cabinet the way mame2003-plus does; the real
+`hi/` in the simulator's cabinet the way the MAME core does; the real
 high-score code reads it from there. The side panel lists the high scores and
 who holds each. Each start of `make sim` clears them.

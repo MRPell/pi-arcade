@@ -26,7 +26,7 @@ Find the Pi's IP: `hostname -I` in a terminal on the Pi.
 git clone <repo-url>
 cd pi-arcade
 
-# Set Pi address (default: pi@raspberrypi.local)
+# Set Pi address (default: pi@retropie.local)
 export PI_HOST=pi@<pi-ip-address>
 
 # Push all files to the Pi and run the installer
@@ -61,7 +61,7 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **PlayStation:** copy `.cue` + `.bin` files to `/home/pi/RetroPie/roms/psx/` and the `scph1001.bin` BIOS to `/home/pi/RetroPie/BIOS/`. See [docs/psx.md](docs/psx.md).
 
-**Arcade profiles:** players sign in with a button combo before playing, each profile plays only in its hours and for its time limit, and an idle sign-in screen shows each game's high score and who holds it. Off by default; manage profiles, score owners and the switch with `make admin`. See [docs/arcade-profiles.md](docs/arcade-profiles.md).
+**Arcade profiles:** players sign in with a button combo before playing, each profile plays only in its hours and for its time limit, and an idle sign-in screen shows each game's high score and who holds it. Off by default; manage profiles, score owners and the switch with `make admin`; `make preflight` checks the cabinet before turning it on. See [docs/arcade-profiles.md](docs/arcade-profiles.md).
 
 **Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
 
@@ -131,12 +131,14 @@ pi-arcade/
 | `make gpio-test` | run GPIO daemon in test/verbose mode |
 | `make logs` | tail GPIO daemon logs |
 | `make test` | run the unit tests locally |
+| `make test-pi` | run every test on the Pi's Python, from a throwaway copy in `/tmp` |
+| `make preflight` | read-only check that the cabinet is ready for arcade profiles to go on |
 | `make sim` | cabinet simulator at http://127.0.0.1:21000 (arcade profiles on) |
 | `make sim-flag-off` | the simulator with the shipped flag (off) |
 | `make admin` | arcade profiles admin at http://127.0.0.1:21010, for the cabinet at `PI_HOST` |
 | `make admin-sim` | the admin for the simulator's cabinet (run `make sim` first) |
 
-Set `PI_HOST` to override the default (`pi@raspberrypi.local`):
+Set `PI_HOST` to override the default (`pi@retropie.local`):
 
 ```bash
 make deploy PI_HOST=pi@192.168.1.42

@@ -80,16 +80,23 @@ class ArcadeSessionFlagChangeTest(unittest.TestCase):
                     'fi\n'
                     'exit 7\n' % (self.calls, self.calls, self.state))
         os.chmod(fake_es, os.stat(fake_es).st_mode | stat.S_IEXEC)
+        # The cabinet's code, with a sign-in that always fails, as it does with
+        # no pad; on the Pi the real pad is there and sign-in would wait on it.
+        repo = os.path.join(self.tmp, 'repo')
+        shutil.copytree(os.path.join(REPO, 'src'), os.path.join(repo, 'src'))
+        shutil.copytree(os.path.join(REPO, 'config'), os.path.join(repo, 'config'))
+        with open(os.path.join(repo, 'src', 'arcade_profiles', 'signin_console.py'), 'w') as f:
+            f.write('import sys\nsys.exit(1)\n')
         self.env = dict(os.environ, PATH=bindir + os.pathsep + os.environ['PATH'],
-                        PI_ARCADE_DIR=REPO, PI_ARCADE_STATE_DIR=self.state,
-                        PI_ARCADE_CABINET_CONFIG=os.path.join(REPO, 'config', 'cabinet.json'))
+                        PI_ARCADE_DIR=repo, PI_ARCADE_STATE_DIR=self.state,
+                        PI_ARCADE_CABINET_CONFIG=os.path.join(repo, 'config', 'cabinet.json'))
         self.env.pop('ARCADE_PROFILES_ENFORCED', None)
 
     def test_turned_on_while_running_signs_in_at_the_next_quit_then_off_again(self):
         proc = subprocess.Popen(['bash', SCRIPT], env=self.env,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # Sign-in has no pad here, so it fails and retries every 3 seconds;
-        # the owner then turns the flag off again.
+        # Sign-in fails and retries every 3 seconds; the owner then turns the
+        # flag off again.
         deadline = time.monotonic() + 10
         while time.monotonic() < deadline and not os.path.exists(os.path.join(self.state, 'cabinet.json')):
             time.sleep(0.1)

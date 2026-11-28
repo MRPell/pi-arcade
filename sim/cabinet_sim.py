@@ -15,7 +15,7 @@ The flag and the profiles are read from the cabinet's settings in state_dir
 every screen, as on the cabinet.
 
 The stand-in games score points (Button 1: 100, Button 2: 1,000) and, like
-mame2003-plus, save a new top score to their hiscore file in state_dir/hi
+the cabinet's MAME core, save a new top score to their hiscore file in state_dir/hi
 when they exit; the real high-score code (arcade_profiles.scores) reads it
 from there. An idle sign-in screen rotates through the high scores.
 """
@@ -218,7 +218,7 @@ class CabinetSim:
         self.view = 'game'
 
     def _save_hiscore(self):
-        """The game exiting: like mame2003-plus, it saves a new top score."""
+        """The game exiting: like the cabinet's MAME core, it saves a new top score."""
         game = self.games.get(self.game_rom)
         if game is None or not self.game_score:
             return

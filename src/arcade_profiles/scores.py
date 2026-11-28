@@ -1,6 +1,6 @@
 """High scores and who holds them (arcade-profiles M-4).
 
-The games keep their own high scores: mame2003-plus saves each game's table in
+The games keep their own high scores: the MAME core saves each game's table in
 its hi folder when the game exits. config/hiscores.json says where in those
 saves each game's top score is. The cabinet notes who holds each top score in
 STATE_DIR/scores.json:
@@ -27,7 +27,11 @@ REPO_DIR = os.environ.get(
     'PI_ARCADE_DIR', os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 FILE = 'scores.json'
 LOCK = 'scores.lock'
-DEFAULT_HI_DIR = '/home/pi/RetroPie/BIOS/mame2003-plus/hi'
+# RetroArch on the cabinet sets no savefile_directory, so each MAME core saves
+# beside the roms: lr-mame2003 is the cabinet's default core, and the
+# runcommand menu can switch a game to lr-mame2003-plus.
+DEFAULT_HI_DIRS = ('/home/pi/RetroPie/roms/mame-libretro/mame2003/hi',
+                   '/home/pi/RetroPie/roms/mame-libretro/mame2003-plus/hi')
 ENCODINGS = ('bcd-le', 'tiles-le')
 TILE_BLANK = 0x24
 
@@ -38,8 +42,11 @@ class ScoreError(ValueError):
     pass
 
 
-def hi_dir():
-    return os.environ.get('PI_ARCADE_HISCORE_DIR', DEFAULT_HI_DIR)
+def hi_dirs():
+    """Where the games' hiscore saves are: PI_ARCADE_HISCORE_DIR (folders
+    separated by os.pathsep) or the cabinet's MAME cores' hi folders."""
+    env = os.environ.get('PI_ARCADE_HISCORE_DIR')
+    return env.split(os.pathsep) if env else list(DEFAULT_HI_DIRS)
 
 
 def load_games(path=None):
@@ -96,9 +103,20 @@ def encode(game, score, data=b''):
     return data[:game.offset] + raw + data[game.offset + game.length:]
 
 
+def save_path(game, directory=None):
+    """The game's hiscore save: in directory, or else the one written last
+    in hi_dirs() (the core the game last ran on). None if there is none."""
+    paths = [os.path.join(d, game.file) for d in ([directory] if directory else hi_dirs())]
+    found = [p for p in paths if os.path.isfile(p)]
+    return max(found, key=os.path.getmtime) if found else None
+
+
 def read_top(game, directory=None):
+    path = save_path(game, directory)
+    if path is None:
+        return None
     try:
-        with open(os.path.join(directory or hi_dir(), game.file), 'rb') as f:
+        with open(path, 'rb') as f:
             return decode(game, f.read())
     except OSError:
         return None

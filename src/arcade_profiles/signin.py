@@ -15,12 +15,15 @@ ROLE_LABELS = {'owner': 'Owner', 'player': 'Player', 'guest': 'Guest'}
 class SignIn:
     ENTRY_TIMEOUT = 5.0     # seconds of no input before a half-entered combo is dropped
     MESSAGE_SECONDS = 3.0   # how long "not recognised" stays up
+    STATUS_SECONDS = 5.0    # how often the welcome screen's time left is worked out again
 
     def __init__(self, profiles, now, describe=None):
         # describe(profile) -> extra welcome lines (time left, or why play is
-        # refused), worked out once at sign-in.
+        # refused), worked out at sign-in, again when the owner changes the
+        # profiles, and every STATUS_SECONDS while the welcome screen is up.
         self._describe = describe or (lambda profile: [])
         self._status = []
+        self._status_at = now
         self._profiles = list(profiles)
         self._entry = []
         self._held = set()
@@ -34,8 +37,9 @@ class SignIn:
 
     def update_profiles(self, profiles, now):
         """The owner changed the profiles from their computer: match against
-        the new combos from now on. A half-entered combo starts again, and a
-        profile signed in but now removed is signed out."""
+        the new combos from now on. A half-entered combo starts again, a
+        profile signed in but now removed is signed out, and one still there
+        has its welcome lines worked out again from its new hours and limit."""
         profiles = list(profiles)
         if profiles == self._profiles:
             return
@@ -49,6 +53,13 @@ class SignIn:
             self._message_until = now + self.MESSAGE_SECONDS
         if self.signed_in is None:
             self._entry = []
+        else:
+            self.signed_in = next(p for p in profiles if p.id == self.signed_in.id)
+            self._refresh_status(now)
+
+    def _refresh_status(self, now):
+        self._status = list(self._describe(self.signed_in))
+        self._status_at = now
 
     def feed(self, name, pressed, now):
         self.tick(now)
@@ -62,6 +73,8 @@ class SignIn:
             self._entry = []
         if self._message and now >= self._message_until:
             self._message = None
+        if self.signed_in is not None and now - self._status_at >= self.STATUS_SECONDS:
+            self._refresh_status(now)
 
     def _press(self, name, now):
         self._held.add(name)
@@ -95,7 +108,7 @@ class SignIn:
         for p in self._profiles:
             if p.combo == entry:
                 self.signed_in = p
-                self._status = list(self._describe(p))
+                self._refresh_status(now)
                 self._entry = []
                 self._message = None
                 return

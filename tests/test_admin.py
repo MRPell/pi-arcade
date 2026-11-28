@@ -262,6 +262,32 @@ class ProfilesFromComputerTest(AdminTest):
         self.tap(*self.combo('theo'))
         self.assertEqual(self.sim.view, 'welcome')
 
+    def test_ac13_welcome_screen_follows_a_changed_time_limit(self):
+        self.assertIn('Time left: 1 h 00 min', self.sign_in('theo'))
+        self.set_minutes('theo', 120)
+        text = self.text()
+        self.assertEqual(self.sim.view, 'welcome')
+        self.assertIn('Time left: 2 h 00 min', text)
+        self.assertNotIn('1 h 00 min', text)
+
+    def test_ac13_welcome_screen_follows_changed_hours(self):
+        self.assertIn('play until', self.sign_in('theo'))
+
+        def no_play_today(by_id):
+            by_id['theo']['limits']['hours']['weekdays'] = []
+        status, state = self.owner_edits(no_play_today)
+        self.assertEqual(status, 200, state)
+        text = self.text()
+        self.assertEqual(self.sim.view, 'welcome')
+        self.assertNotIn('Time left', text)
+
+    def test_welcome_screen_follows_the_play_hours_ending(self):
+        self.assertIn('play until 5:00 pm', self.sign_in('theo'))   # hours 3-8 pm, 1 h left
+        self.clock.advance(4.5 * 3600)                               # 8:30 pm, hours over
+        text = self.text()
+        self.assertEqual(self.sim.view, 'welcome')
+        self.assertNotIn('Time left', text)
+
     def test_bg2_removed_at_the_game_list_cannot_start_a_game(self):
         self.sign_in('john')
         self.tap('1')
