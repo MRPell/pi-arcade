@@ -1,11 +1,12 @@
 """Games under a profile's rules on the cabinet: runcommand's start and end hooks.
 
     python3 -m arcade_profiles.gate_console start RUNCOMMAND_PID
-        Before a game: exit 0 to let it start (and count it), or show why it
-        is refused and exit 1 (runcommand-onstart.sh then ends runcommand).
+        Before a game: note any high score set while profiles were off, then
+        exit 0 to let it start (and count it), or show why it is refused and
+        exit 1 (runcommand-onstart.sh then ends runcommand).
     python3 -m arcade_profiles.gate_console end
-        After a game: stop counting; if the game was stopped because its time
-        ran out, say so.
+        After a game: stop counting, credit a new high score to the profile
+        that played; if the game was stopped because its time ran out, say so.
     python3 -m arcade_profiles.gate_console guard START_MONO
         Started by `start`, detached: records the game's time as it goes and
         stops the game (everything runcommand started) when its time is up.
@@ -19,7 +20,7 @@ import subprocess
 import sys
 import time
 
-from . import play
+from . import play, scores
 from .console import REPO_DIR, show_until_button
 from .session import read_session, state_dir
 from .settings import ProfilesWatch, load_profiles
@@ -33,6 +34,7 @@ KILL_WAIT_SECONDS = 5.0
 def start(runcommand_pid):
     profiles = load_profiles()
     directory = state_dir()
+    scores.sync(directory, None, time.time())
     session = read_session(directory)
     profile = next((p for p in profiles if session and p.id == session['profile']), None)
     if profile is None:
@@ -140,6 +142,7 @@ def end():
                                         play.network_time_synced())
         elif ended['ended'] == 'time':
             screen = play.removed_screen(read_session(state_dir()))
+    scores.sync(state_dir(), profile.id if profile else None, time.time())
     if screen:
         show_until_button(screen, play.DISMISS_SECONDS, DISMISS_GRACE)
     return 0

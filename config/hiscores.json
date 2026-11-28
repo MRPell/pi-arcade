@@ -1,0 +1,9 @@
+{
+  "_comment": "Where each game keeps its top score, for the arcade profiles high-score screen (docs/arcade-profiles.md). file: the game's hiscore save in mame2003-plus's hi folder (/home/pi/RetroPie/BIOS/mame2003-plus/hi). offset/length: the bytes of the top score in it; mame2003-plus saves the memory regions listed for the game in its hiscore.dat back to back, so the offset is the length of the regions before the top score's. encoding: bcd-le (two digits a byte, lowest first) or tiles-le (one digit a byte, 0-9, lowest first, blank is 0x24). Worked out from hiscore.dat; not yet checked against real saves on the cabinet.",
+  "games": {
+    "pacman":   { "title": "Pac-Man",        "file": "pacman.hi",   "offset": 0,   "length": 4, "encoding": "bcd-le" },
+    "galaga":   { "title": "Galaga",         "file": "galaga.hi",   "offset": 45,  "length": 6, "encoding": "tiles-le" },
+    "dkong":    { "title": "Donkey Kong",    "file": "dkong.hi",    "offset": 170, "length": 3, "encoding": "bcd-le" },
+    "invaders": { "title": "Space Invaders", "file": "invaders.hi", "offset": 0,   "length": 2, "encoding": "bcd-le" }
+  }
+}

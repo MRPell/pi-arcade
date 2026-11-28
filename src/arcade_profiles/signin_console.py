@@ -2,7 +2,9 @@
 
 Run by scripts/arcade-session.sh when arcade-profiles.enforce is on. Reads the
 Pi Arcade Controller pad, shows the sign-in screen, records who signed in in
-the session file, and exits 0 once they press a button to play.
+the session file, and exits 0 once they press a button to play. Left idle, it
+rotates through the high scores (arcade_profiles.scores.Attract) until a button
+is pressed.
 
 Usage: python3 -m arcade_profiles.signin_console
 """
@@ -11,7 +13,7 @@ import select
 import sys
 import time
 
-from . import play
+from . import play, scores
 from .console import PAD_NAME, clear, draw, open_pad
 from .session import clear_session, state_dir, write_session
 from .settings import ProfilesWatch
@@ -40,6 +42,8 @@ def main():
         return play.status_lines(profiles, decision, wall)
 
     signin = SignIn(watch.profiles, time.monotonic(), describe)
+    attract = scores.Attract(time.monotonic())
+    games = scores.load_games()
     shown = None
     try:
         while not signin.done:
@@ -50,6 +54,12 @@ def main():
                 clear_session(directory)     # the owner removed this profile
             signin.tick(now)
             screen = signin.screen()
+            if scores.signin_idle(screen):
+                score_rows = scores.rows(directory, watch.profiles, games)
+                if attract.tick(now, bool(score_rows)):
+                    screen = attract.screen(now, score_rows)
+            else:
+                attract.tick(now, False)
             if screen != shown:
                 draw(screen)
                 shown = screen
@@ -58,6 +68,8 @@ def main():
                 continue
             for event in pad.read():
                 for name, pressed in decoder.feed(event.type, event.code, event.value):
+                    if pressed and attract.input(time.monotonic()):
+                        continue             # woke the screen from the high scores
                     was_signed_in = signin.signed_in
                     signin.feed(name, pressed, time.monotonic())
                     if was_signed_in is None and signin.signed_in is not None:
