@@ -6,7 +6,7 @@ play hours and while it has time left. It ships dark: nothing changes until the
 `arcade-profiles.enforce` flag is on.
 
 Built so far: sign-in (M-1), hours and time limits (M-2), and the admin on
-the owner's computer (M-3). The high-score screen comes in a later milestone.
+the owner's computer (M-3), and the high-score screen with score owners (M-4).
 
 ## The flag
 
@@ -105,6 +105,31 @@ pressed together with Coin (the Coin + Start exit chord, Coin hotkeys) is ignore
 
 Who is signed in is kept in `/home/pi/.pi-arcade/session.json`.
 
+## High scores
+
+With the flag on, a sign-in screen left alone for 30 seconds (nothing entered)
+turns into the high-score screen: one game at a time, every 5 seconds, its top
+score and the profile that holds it ("Held by Theo", or "Held by no profile").
+Any button brings sign-in back; that press is not part of a combo. With no high
+scores yet, sign-in stays up. With the flag off there is no sign-in screen and
+so no high-score screen: the cabinet behaves as before.
+
+Where the scores come from: the games keep their own. mame2003-plus saves each
+game's high-score table to `/home/pi/RetroPie/BIOS/mame2003-plus/hi/<game>.hi`
+when the game exits, and `config/hiscores.json` says where the top score is in
+that file for Pac-Man, Galaga, Donkey Kong and Space Invaders (worked out from
+the core's `hiscore.dat`). Other games show no high score until they are added
+there. Before each game the cabinet reads the top scores; after it, a top score
+that changed is credited to the profile that just played. A top score that
+changed while the flag was off is noted with no profile, for the owner to give
+to someone in the admin. Who holds what is kept in
+`/home/pi/.pi-arcade/scores.json`.
+
+Not yet checked on the cabinet: the byte positions in `config/hiscores.json`
+against real saves, that mame2003-plus has high-score saving on (it is the
+core's default), and that a game stopped because time ran out still saves its
+table.
+
 ## Admin, from the owner's computer
 
 ```bash
@@ -120,6 +145,10 @@ The admin page shows what the cabinet has and changes it:
   remove one. **Save to cabinet** checks the change first; a combo that clashes,
   hours that end before they start, a missing owner or the like is refused with
   the reason, and the cabinet keeps what it had.
+- **High scores**: each game's top score and who holds it. Pick a different
+  profile (or No profile) and it saves to the cabinet at once; the high-score
+  screen shows it on its next turn. **Reload from cabinet** picks up scores set
+  since the page was opened.
 
 It reaches the cabinet over SSH (the computer needs passwordless SSH to the
 Pi) and runs `python3 -m arcade_profiles.settings` there, which checks the
@@ -173,3 +202,9 @@ sync off and on, and shows each profile's time used and left. It starts at the
 real time with a fresh, empty play record each run. Setting the clock earlier
 than a game already played makes the clock untrusted (only the owner plays),
 as on the cabinet; **Clear play record and power-cycle** starts over.
+
+The stand-in games score points (Button 1: 100, Button 2: 1,000) for Pac-Man,
+Galaga, Donkey Kong and Space Invaders, and on exit save a new top score to
+`hi/` in the simulator's cabinet the way mame2003-plus does; the real
+high-score code reads it from there. The side panel lists the high scores and
+who holds each. Each start of `make sim` clears them.

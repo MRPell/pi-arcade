@@ -61,7 +61,7 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **PlayStation:** copy `.cue` + `.bin` files to `/home/pi/RetroPie/roms/psx/` and the `scph1001.bin` BIOS to `/home/pi/RetroPie/BIOS/`. See [docs/psx.md](docs/psx.md).
 
-**Arcade profiles:** players sign in with a button combo before playing, and each profile plays only in its hours and for its time limit. Off by default; manage profiles and the switch with `make admin`. See [docs/arcade-profiles.md](docs/arcade-profiles.md).
+**Arcade profiles:** players sign in with a button combo before playing, each profile plays only in its hours and for its time limit, and an idle sign-in screen shows each game's high score and who holds it. Off by default; manage profiles, score owners and the switch with `make admin`. See [docs/arcade-profiles.md](docs/arcade-profiles.md).
 
 **Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
 
@@ -98,6 +98,7 @@ pi-arcade/
 │   ├── gpio_map.json        # GPIO pin assignments — edit this first
 │   ├── cabinet.json         # cabinet feature flags (arcade-profiles.enforce)
 │   ├── profiles.json        # arcade profiles as shipped (changed with make admin)
+│   ├── hiscores.json        # where each game's top score is in its MAME hiscore save
 │   └── retroarch-autoconfig/  # RetroArch profiles for the virtual pads
 ├── docs/
 │   ├── hardware-setup.md    # Wiring diagrams and physical assembly
