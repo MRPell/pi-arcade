@@ -37,13 +37,25 @@ status:
 test:
 	python3 -m unittest discover -s tests -p 'test_[!k]*.py'
 
-# Cabinet simulator in the browser, arcade-profiles.enforce on (dev)
+# Cabinet simulator in the browser, arcade-profiles.enforce on (dev). Its
+# cabinet's settings live in SIM_DIR, where make admin-sim changes them.
 PORT ?= 21000
+SIM_DIR ?= $(CURDIR)/.sim-cabinet
 sim:
-	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.dev.json
+	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.dev.json --state-dir $(SIM_DIR)
 
 # Same, with the cabinet's shipped config (flag off): boots as before profiles
 sim-flag-off:
-	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.json
+	python3 -m sim.server --port $(PORT) --cabinet config/cabinet.json --state-dir $(SIM_DIR)
 
-.PHONY: test sim sim-flag-off deploy install deploy-install ssh logs restart-daemon gpio-test status
+# Arcade profiles admin on this computer: profiles, combos, limits and the
+# flag, written to the cabinet over SSH (PI_HOST, PI_DIR)
+ADMIN_PORT ?= 21010
+admin:
+	python3 -m admin.server --port $(ADMIN_PORT) --pi $(PI_HOST) --pi-dir $(PI_DIR)
+
+# The admin pointed at the simulator's cabinet (start make sim first)
+admin-sim:
+	python3 -m admin.server --port $(ADMIN_PORT) --sim-dir $(SIM_DIR)
+
+.PHONY: test sim sim-flag-off admin admin-sim deploy install deploy-install ssh logs restart-daemon gpio-test status

@@ -61,7 +61,7 @@ ROMs are **not included** and must be legally obtained — dumped from hardware 
 
 **PlayStation:** copy `.cue` + `.bin` files to `/home/pi/RetroPie/roms/psx/` and the `scph1001.bin` BIOS to `/home/pi/RetroPie/BIOS/`. See [docs/psx.md](docs/psx.md).
 
-**Arcade profiles:** players sign in with a button combo before playing, and each profile plays only in its hours and for its time limit. Off by default; see [docs/arcade-profiles.md](docs/arcade-profiles.md).
+**Arcade profiles:** players sign in with a button combo before playing, and each profile plays only in its hours and for its time limit. Off by default; manage profiles and the switch with `make admin`. See [docs/arcade-profiles.md](docs/arcade-profiles.md).
 
 **Ports:** keyboard-only PC games (LBreakout2) run under a joystick-to-keyboard bridge. See [docs/ports.md](docs/ports.md).
 
@@ -97,7 +97,7 @@ pi-arcade/
 ├── config/
 │   ├── gpio_map.json        # GPIO pin assignments — edit this first
 │   ├── cabinet.json         # cabinet feature flags (arcade-profiles.enforce)
-│   ├── profiles.json        # arcade profiles: sign-in combos, hours, time limits
+│   ├── profiles.json        # arcade profiles as shipped (changed with make admin)
 │   └── retroarch-autoconfig/  # RetroArch profiles for the virtual pads
 ├── docs/
 │   ├── hardware-setup.md    # Wiring diagrams and physical assembly
@@ -112,6 +112,7 @@ pi-arcade/
 ├── src/
 │   ├── gpio_daemon.py       # GPIO → virtual gamepad daemon
 │   └── arcade_profiles/     # combo sign-in, hours and time limits (docs/arcade-profiles.md)
+├── admin/                   # arcade profiles admin, on the owner's computer (make admin)
 ├── sim/                     # browser cabinet simulator (make sim)
 ├── systemd/
 │   └── pi-arcade-gpio.service
@@ -131,6 +132,8 @@ pi-arcade/
 | `make test` | run the unit tests locally |
 | `make sim` | cabinet simulator at http://127.0.0.1:21000 (arcade profiles on) |
 | `make sim-flag-off` | the simulator with the shipped flag (off) |
+| `make admin` | arcade profiles admin at http://127.0.0.1:21010, for the cabinet at `PI_HOST` |
+| `make admin-sim` | the admin for the simulator's cabinet (run `make sim` first) |
 
 Set `PI_HOST` to override the default (`pi@raspberrypi.local`):
 

@@ -16,12 +16,21 @@ REPO = os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, os.path.join(REPO, 'src'))
 sys.path.insert(0, REPO)
 
+from arcade_profiles import settings  # noqa: E402
 from arcade_profiles.profiles import load_profiles  # noqa: E402
 from sim.cabinet_sim import CabinetSim, SimClock  # noqa: E402
 from sim import server  # noqa: E402
 
-PROFILES = load_profiles(os.path.join(REPO, 'config', 'profiles.json'))
+PROFILES_JSON = os.path.join(REPO, 'config', 'profiles.json')
+PROFILES = load_profiles(PROFILES_JSON)
 COMBOS = {p.id: p.combo for p in PROFILES}
+
+
+def cabinet(state_dir, enforce, clock):
+    """A simulated cabinet whose settings hold the shipped profiles and the given flag."""
+    with open(PROFILES_JSON) as f:
+        settings.write({'enforce': enforce, 'profiles': json.load(f)}, state_dir)
+    return CabinetSim(state_dir, clock)
 
 
 FRI_4PM = dt.datetime(2026, 11, 27, 16, 0)
@@ -39,7 +48,7 @@ class CabinetSimTest(unittest.TestCase):
         self.clock = frozen_clock()
 
     def boot(self, enforce):
-        return CabinetSim(PROFILES, enforce=enforce, state_dir=self.state_dir, clock=self.clock)
+        return cabinet(self.state_dir, enforce, self.clock)
 
     def tap(self, sim, *names):
         for n in names:
@@ -131,7 +140,7 @@ class LimitsInSimTest(unittest.TestCase):
         self.state_dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.state_dir)
         self.clock = frozen_clock()
-        self.sim = CabinetSim(PROFILES, enforce=True, state_dir=self.state_dir, clock=self.clock)
+        self.sim = cabinet(self.state_dir, True, self.clock)
 
     def tap(self, *names):
         for n in names:
@@ -278,7 +287,7 @@ class LimitsInSimTest(unittest.TestCase):
         self.start_game()
         self.clock.advance(40 * 60)
         self.sim.state()                  # a heartbeat
-        sim = CabinetSim(PROFILES, enforce=True, state_dir=self.state_dir, clock=self.clock)
+        sim = cabinet(self.state_dir, True, self.clock)
         theo = next(u for u in sim.state()['usage'] if u['id'] == 'theo')
         self.assertEqual(theo['used'], 40 * 60)
 
@@ -308,7 +317,7 @@ class FlagOffLimitsTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, state_dir)
         clock = frozen_clock(dt.datetime(2026, 11, 27, 2, 0))
         clock.synced = False
-        sim = CabinetSim(PROFILES, enforce=False, state_dir=state_dir, clock=clock)
+        sim = cabinet(state_dir, False, clock)
         sim.feed('1', True)
         sim.feed('1', False)
         self.assertEqual(sim.view, 'game')
@@ -316,7 +325,7 @@ class FlagOffLimitsTest(unittest.TestCase):
         state = sim.state()
         self.assertEqual(state['view'], 'game')
         self.assertIsNone(state['usage'])
-        self.assertEqual(os.listdir(state_dir), [])
+        self.assertFalse({'usage.json', 'session.json'} & set(os.listdir(state_dir)))
 
 
 class ServerTest(unittest.TestCase):

@@ -21,8 +21,8 @@ import time
 
 from . import play
 from .console import REPO_DIR, show_until_button
-from .profiles import load_profiles
 from .session import read_session, state_dir
+from .settings import ProfilesWatch, load_profiles
 from .usage import boot_id, locked
 
 HEARTBEAT_SECONDS = 15.0
@@ -30,20 +30,13 @@ DISMISS_GRACE = 1.5
 KILL_WAIT_SECONDS = 5.0
 
 
-def _profiles():
-    return load_profiles(os.path.join(REPO_DIR, 'config', 'profiles.json'))
-
-
 def start(runcommand_pid):
-    profiles = _profiles()
+    profiles = load_profiles()
     directory = state_dir()
     session = read_session(directory)
     profile = next((p for p in profiles if session and p.id == session['profile']), None)
     if profile is None:
-        show_until_button({'view': 'refused', 'title': 'Nobody is signed in',
-                           'lines': ['Quit EmulationStation (Start, Quit) to sign in.',
-                                     '', 'The game did not start.', 'Press any button']},
-                          play.DISMISS_SECONDS, DISMISS_GRACE)
+        show_until_button(play.not_signed_in_screen(session), play.DISMISS_SECONDS, DISMISS_GRACE)
         return 1
 
     synced = play.network_time_synced()
@@ -109,12 +102,16 @@ def stop_game(runcommand_pid):
 
 def guard(start_mono):
     directory = state_dir()
+    watch = ProfilesWatch()
     while True:
+        profiles = watch.current()
         with locked(directory) as ledger:
             o = ledger.open
             if not o or o['start_mono'] != start_mono:
                 return 0
-            if ledger.heartbeat(time.monotonic()):
+            mono = time.monotonic()
+            play.refresh_limit(profiles, ledger, time.time(), mono)
+            if ledger.heartbeat(mono):
                 ledger.mark_ended('time')
                 runcommand = o['runcommand']
                 break
@@ -125,7 +122,7 @@ def guard(start_mono):
 
 
 def end():
-    profiles = _profiles()
+    profiles = load_profiles()
     with locked(state_dir()) as ledger:
         o = ledger.open
         if not o:
@@ -141,6 +138,8 @@ def end():
         if ended['ended'] == 'time' and profile is not None:
             screen = play.timeup_screen(profiles, profile, ledger, time.time(),
                                         play.network_time_synced())
+        elif ended['ended'] == 'time':
+            screen = play.removed_screen(read_session(state_dir()))
     if screen:
         show_until_button(screen, play.DISMISS_SECONDS, DISMISS_GRACE)
     return 0

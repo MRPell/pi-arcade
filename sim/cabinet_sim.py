@@ -8,6 +8,11 @@ drops to the console, as before profiles. Flag on, sign-in first; starting a
 game is checked against the signed-in profile's hours and time left, a game
 is stopped when its time runs out, and quitting EmulationStation returns to
 sign-in.
+
+The flag and the profiles are read from the cabinet's settings in state_dir
+(arcade_profiles.settings), which the admin on the owner's computer writes
+(make admin-sim): the flag each time EmulationStation quits, the profiles on
+every screen, as on the cabinet.
 """
 
 import datetime as dt
@@ -16,6 +21,7 @@ import uuid
 
 from arcade_profiles import play
 from arcade_profiles.session import clear_session, read_session, write_session
+from arcade_profiles.settings import ProfilesWatch, enforce_on
 from arcade_profiles.signin import SignIn
 from arcade_profiles.usage import Ledger
 
@@ -51,13 +57,21 @@ class SimClock:
 
 
 class CabinetSim:
-    def __init__(self, profiles, enforce, state_dir, clock=None):
-        self.profiles = profiles
-        self.enforce = enforce
+    def __init__(self, state_dir, clock=None):
         self.state_dir = state_dir
         self.clock = clock or SimClock()
         self.boot_id = uuid.uuid4().hex
+        self._watch = ProfilesWatch(state_dir)
+        self.ledger = None
         self.boot()
+
+    @property
+    def profiles(self):
+        return self._watch.current()
+
+    def enforce_setting(self):
+        """arcade-profiles.enforce as the settings say now."""
+        return enforce_on(self.state_dir)
 
     def boot(self):
         clear_session(self.state_dir)
@@ -67,21 +81,32 @@ class CabinetSim:
         self.game_log = []
         self.held = set()
         self.notice = None
-        if self.enforce:
-            self.ledger = Ledger(self.state_dir, self.clock.wall())
-            self.ledger.recover(self.boot_id)
+        if self.enforce_setting():
             self._start_signin()
         else:
+            self.enforced = False      # this EmulationStation is under profiles
             self.view = 'menu'
 
+    def _quit_emulationstation(self):
+        """What arcade-session.sh does when EmulationStation quits: the flag is read again."""
+        if self.enforce_setting():
+            self._start_signin()
+        else:
+            self.enforced = False      # turned off: to the console, as before profiles
+            self.view = 'shell'
+
     def _profile(self):
-        pid = read_session(self.state_dir)['profile']
-        return next(p for p in self.profiles if p.id == pid)
+        session = read_session(self.state_dir)
+        return next((p for p in self.profiles if session and p.id == session['profile']), None)
 
     def _check(self, profile):
         return play.check(self.profiles, profile, self.clock.wall(), self.ledger, self.clock.synced)
 
     def _start_signin(self):
+        if self.ledger is None:
+            self.ledger = Ledger(self.state_dir, self.clock.wall())
+            self.ledger.recover(self.boot_id)
+        self.enforced = True
         clear_session(self.state_dir)
         wall = self.clock.wall
 
@@ -102,10 +127,16 @@ class CabinetSim:
     def tick(self):
         mono = self.clock.mono()
         if self.view in ('signin', 'welcome'):
+            self.signin.update_profiles(self.profiles, mono)
+            if self.view == 'welcome' and self.signin.signed_in is None:
+                clear_session(self.state_dir)      # the owner removed this profile
+                self.view = 'signin'
             self.signin.tick(mono)
-        elif self.view == 'game' and self.enforce and self.ledger.heartbeat(mono):
-            self.ledger.mark_ended('time')
-            self._end_game()
+        elif self.view == 'game' and self.enforced:
+            play.refresh_limit(self.profiles, self.ledger, self.clock.wall(), mono)
+            if self.ledger.heartbeat(mono):
+                self.ledger.mark_ended('time')
+                self._end_game()
         elif self.view in ('refused', 'timeup') and mono >= self.notice['until']:
             self.view = 'menu'
 
@@ -138,8 +169,11 @@ class CabinetSim:
 
     def _launch(self, title):
         """What runcommand-onstart.sh does on the cabinet, then the game."""
-        if self.enforce:
+        if self.enforced:
             profile = self._profile()
+            if profile is None:
+                self._notice(play.not_signed_in_screen(read_session(self.state_dir)))
+                return
             wall = self.clock.wall()
             self.ledger.recover(self.boot_id)
             decision = self._check(profile)
@@ -156,11 +190,13 @@ class CabinetSim:
         """What runcommand-onend.sh does on the cabinet."""
         self.game = None
         self.view = 'menu'
-        if not self.enforce:
+        if not self.enforced:
             return
         ended = self.ledger.finish(self.clock.mono())
-        if ended and ended['ended'] == 'time':
-            profile = next(p for p in self.profiles if p.id == ended['profile'])
+        profile = ended and next((p for p in self.profiles if p.id == ended['profile']), None)
+        if ended and ended['ended'] == 'time' and profile is None:
+            self._notice(play.removed_screen(read_session(self.state_dir)))
+        elif profile is not None and ended['ended'] == 'time':
             self._notice(play.timeup_screen(self.profiles, profile, self.ledger,
                                             self.clock.wall(), self.clock.synced))
 
@@ -184,10 +220,7 @@ class CabinetSim:
         elif name == '2' or (name == '1' and ES_MENU[self.menu_cursor] == 'Close menu'):
             self.view = 'menu'
         elif name == '1':
-            if self.enforce:
-                self._start_signin()
-            else:
-                self.view = 'shell'
+            self._quit_emulationstation()
 
     def _on_game(self, name, pressed):
         if {'coin', 'start'} <= self.held:
@@ -207,12 +240,13 @@ class CabinetSim:
         now = dt.datetime.fromtimestamp(wall)
         state = {
             'view': self.view,
-            'enforce': self.enforce,
+            'enforce': self.enforce_setting(),
+            'enforced': self.enforced,
             'session': read_session(self.state_dir),
             'clock': {'wall': now.strftime('%Y-%m-%dT%H:%M'),
                       'text': '%s, %s' % (now.strftime('%a %d %b %Y'), play.clock_time(now)),
                       'synced': self.clock.synced},
-            'usage': play.usage_summary(self.profiles, self.ledger, wall) if self.enforce else None,
+            'usage': play.usage_summary(self.profiles, self.ledger, wall) if self.ledger else None,
         }
         if self.view in ('signin', 'welcome'):
             state['screen'] = self.signin.screen()

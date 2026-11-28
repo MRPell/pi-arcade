@@ -106,9 +106,10 @@
   </main>
   <aside aria-label="Simulator only">
     <h2>Simulator only</h2>
-    <p>Not part of the cabinet: what the Pi would have on disk.</p>
+    <p>Not part of the cabinet: what the Pi would have on disk. The owner changes the flag and the profiles from their computer (<kbd>make admin-sim</kbd>); the flag applies the next time EmulationStation quits.</p>
     <dl>
       <dt>arcade-profiles.enforce</dt><dd id="flag">?</dd>
+      <dt>EmulationStation</dt><dd id="enforced">?</dd>
       <dt>session.json</dt><dd id="session">?</dd>
     </dl>
     <h2>Cabinet clock</h2>
@@ -234,6 +235,8 @@
       });
     }
     document.getElementById('flag').textContent = s.enforce ? 'on' : 'off';
+    document.getElementById('enforced').textContent = s.view === 'shell' ? 'not running'
+      : s.enforced ? 'under profiles' : 'as before profiles';
     document.getElementById('session').textContent = s.session ? JSON.stringify(s.session) : 'none';
   }
 
