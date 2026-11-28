@@ -71,6 +71,47 @@ class HiscoreFileTest(unittest.TestCase):
         self.assertEqual(out[173:], data[173:])
 
 
+FIXTURES = os.path.join(REPO, 'tests', 'fixtures', 'mame2003-hi')
+
+
+class CabinetSavesTest(unittest.TestCase):
+    """M-5: the saves lr-mame2003 wrote on the real cabinet, copied from its
+    roms/mame-libretro/mame2003/hi folder. Their tables' first entries (9,350,
+    25,720, 7,650 and 800) are the top scores config/hiscores.json must find."""
+
+    def test_real_cabinet_saves_decode_to_their_top_scores(self):
+        tops = {rom: scores.read_top(game, FIXTURES) for rom, game in GAMES.items()}
+        self.assertEqual(tops, {'pacman': 9350, 'galaga': 25720, 'dkong': 7650, 'invaders': 800})
+
+    def test_the_cabinet_reads_where_its_mame_cores_save(self):
+        # RetroArch on the cabinet has no savefile_directory, so each MAME core
+        # saves beside the roms: lr-mame2003 (the cabinet's default) and
+        # lr-mame2003-plus (picked per game in the runcommand menu).
+        env = os.environ.pop('PI_ARCADE_HISCORE_DIR', None)
+        if env is not None:
+            self.addCleanup(os.environ.__setitem__, 'PI_ARCADE_HISCORE_DIR', env)
+        self.assertEqual(scores.hi_dirs(), [
+            '/home/pi/RetroPie/roms/mame-libretro/mame2003/hi',
+            '/home/pi/RetroPie/roms/mame-libretro/mame2003-plus/hi'])
+
+    def test_the_save_a_game_wrote_last_wins_across_cores(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp)
+        old, new = os.path.join(tmp, 'mame2003'), os.path.join(tmp, 'mame2003-plus')
+        for d, score, when in ((old, 9350, 1000), (new, 12000, 2000)):
+            os.makedirs(d)
+            path = os.path.join(d, GAMES['pacman'].file)
+            with open(path, 'wb') as f:
+                f.write(scores.encode(GAMES['pacman'], score))
+            os.utime(path, (when, when))
+        os.environ['PI_ARCADE_HISCORE_DIR'] = os.pathsep.join([old, new])
+        self.addCleanup(os.environ.pop, 'PI_ARCADE_HISCORE_DIR')
+        self.assertEqual(scores.read_top(GAMES['pacman']), 12000)
+        os.utime(os.path.join(old, GAMES['pacman'].file), (3000, 3000))
+        self.assertEqual(scores.read_top(GAMES['pacman']), 9350)
+        self.assertIsNone(scores.read_top(GAMES['galaga']))     # never played: no save
+
+
 class BoardTest(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
@@ -358,7 +399,7 @@ class AdminScoresTest(SimScoresTest):
         self.setup_scores()
         before = self.board_file()
         for body in ({'game': 'pacman', 'holder': 'nobody'}, {'game': 'frogger', 'holder': 'theo'},
-                     {'game': 'pacman'} | {'holder': 3}, {'holder': 'theo'}):
+                     {'game': 'pacman', 'holder': 3}, {'holder': 'theo'}):
             status, answer = self.call('/api/scores', body)
             self.assertIn(status, (400, 502), body)
             self.assertIn('error', answer)
